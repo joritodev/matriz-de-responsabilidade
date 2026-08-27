@@ -23,7 +23,7 @@ Trocar o banco entre local e produção invalidaria o motor de prazo, a idempot�
 5. **Repositórios em `packages/db` não implementam regra.** “Pode criar esta dependência?” e “qual o due_date?” vivem em `packages/core`. O banco impõe o que for invariante física (PK, FK, UNIQUE de `provider_message_id`, UNIQUE `(matrix_id, sequence_number)`).
 6. **Sem ORM paralelo** (Prisma, TypeORM) e sem query builder solto no `apps/web`.
 
-Lista inicial de agregados (revisão fina é do subagent de domínio; arquitetura não inventa tabelas redundantes): users, sessions, responsibles, matrices, tasks, task_responsibles, task_dependencies, deadline_rules, deadline_occurrences, holidays, deadline_extensions, task_notes, conversations, messages, ai_classifications, notification_rules, notification_events, notification_targets, inbox_items, outbox_messages, domain_events, audit_logs, system_settings, mais o schema interno do pg-boss.
+Lista canônica (ver `docs/02-domain-model.md`): users, sessions, responsibles, matrices, tasks, task_responsibles, task_dependencies, deadline_rules, deadline_occurrences, business_calendars, holidays, deadline_extensions, task_notes, task_status_history, conversations, messages, ai_classifications, prompt_versions, notification_rules, notification_events, notification_targets, inbox_items, outbox_messages, audit_logs, system_settings, mais o schema interno do pg-boss. **Não** criar `domain_events` nem `automation_jobs` — evento é in-process; efeito é a outbox.
 
 ## Consequências
 

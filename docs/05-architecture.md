@@ -207,7 +207,7 @@ Browser
        persistir DeadlineExtension APPROVED
        atualizar prazo vigente (não o original)
        audit_log origem=USER
-       INSERT domain_events (ExtensionApproved)
+       emitir evento in-process ExtensionApproved (não há tabela domain_events)
        INSERT outbox_messages (efeitos: RecalculateDependents, NotifyShareholders, NotifyResponsibles)
     COMMIT                                    packages/db
   → (opcional) pg-boss.send('dispatch-outbox')  se não houver poller contínuo
@@ -281,7 +281,7 @@ Evento = fato que **já ocorreu** no domínio, persistido após COMMIT. Não é 
 | `TaskDeliveryClaimed` | Responsável disse “já entreguei” (IA ou humano) | `COMPLETED` |
 | `TaskDeliveryValidated` | ADMIN confirmou | Equivale/acompanha `TaskCompleted` |
 
-Não adotamos message broker. A tabela `domain_events` (append-only) serve a auditoria e a projeção da timeline da tarefa. Consumidores **não** escutam essa tabela para chamar a Meta. Consumidores de efeito leem a **outbox**.
+Não adotamos message broker nem tabela `domain_events`. O evento de domínio é **emitido in-process** após as invariantes. Persistência do fato = `audit_logs` + tabelas específicas (`task_status_history`, `deadline_extensions`, `inbox_items`, …). Consumidores **não** escutam um log de eventos para chamar a Meta. Consumidores de efeito leem a **outbox**. Decisão alinhada a `docs/02-domain-model.md` (tabela `domain_events` rejeitada como redundante).
 
 ### 8.2 Catálogo de efeitos (outbox)
 
@@ -318,7 +318,7 @@ sequenceDiagram
 
   UI->>Core: decidir mutação + eventos + efeitos
   UI->>DB: BEGIN
-  UI->>DB: UPDATE domínio + audit_logs + domain_events
+  UI->>DB: UPDATE domínio + audit_logs
   UI->>DB: INSERT outbox_messages (pending)
   UI->>DB: COMMIT
   Note over DB: Se crash aqui, efeito não se perde
@@ -443,7 +443,7 @@ Q1 (um ADMIN vs vários OPERATORs) **não bloqueia** o modelo: a tabela e os pap
 |---|---|---|
 | `DATABASE_URL` | Sim | Postgres |
 | `SESSION_SECRET` | Sim (web) | Assinatura/derivação do cookie |
-| `APP_BASE_URL` | Sim | Links na UI e templates |
+| `APP_URL` | Sim | Links na UI, cookies e templates |
 | `NODE_ENV` | Sim | `development` / `production` / `test` |
 | `LOG_LEVEL` | Não (default `info`) | Pino |
 | `TZ` / timezone app | Não | Default `America/Sao_Paulo` (A2); override também em `system_settings` |
@@ -636,3 +636,6 @@ Perguntas para o integrator consolidar em `docs/11-open-questions.md` (não inve
 - `docs/06-whatsapp-integration.md`, `docs/07-ai-triage.md` (detalhe de adapters)
 - `docs/08-security.md` (ameaças, LGPD, webhook)
 - `docs/10-roadmap.md` (slices e DoD)
+- `docs/12-ux-spec.md` (telas)
+- `docs/runbooks/local-dev.md` (contrato Compose)
+- `docs/assumptions.md` (A1–A36)

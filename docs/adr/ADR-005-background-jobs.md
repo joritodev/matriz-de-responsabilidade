@@ -11,7 +11,7 @@ Sistema interno, um worker, volume baixo (dezenas/centenas de tarefas, não milh
 ## Decisão
 
 1. **Fila do MVP = pg-boss** rodando **no mesmo PostgreSQL** da aplicação, processo **`apps/worker` separado** de `apps/web`.
-2. **Outbox transacional própria** (`outbox_messages`), gravada no **mesmo COMMIT** que a mutação de domínio + `audit_logs` + `domain_events`. A outbox guarda o **efeito** (SendWhatsAppTemplate, ClassifyInboundMessage, …), não substitui o evento de domínio.
+2. **Outbox transacional própria** (`outbox_messages`), gravada no **mesmo COMMIT** que a mutação de domínio + `audit_logs`. Eventos de domínio são emitidos **in-process** (sem tabela `domain_events`). A outbox guarda o **efeito** (SendWhatsAppTemplate, ClassifyInboundMessage, …), não substitui o fato já persistido nas tabelas de negócio.
 3. **Fluxo canônico:** transação persiste fato + outbox → COMMIT → pg-boss acorda o worker (ou o worker faz poll curto) → adapter → marca `sent` / `retry` / `failed`. Detalhe em `docs/05-architecture.md` §8.
 4. **Uma instância de worker no MVP.** pg-boss / `SELECT FOR UPDATE SKIP LOCKED` evitam double-dispatch. Idempotência de negócio em `notification_events` (chave natural do lembrete) e `provider_message_id` no inbound.
 5. **Redis e BullMQ ficam explicitamente fora** até existir evidência de fila, latência ou multi-worker que o Postgres não aguente. Se um dia vierem, **a outbox permanece no Postgres** — só o transporte do poller muda.

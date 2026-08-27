@@ -194,7 +194,7 @@ Boot de `apps/web` e `apps/worker` valida o schema Zod em `packages/config`. Fal
 | `NODE_ENV` | todos | `development \| test \| production` |
 | `DATABASE_URL` | web, worker | URL postgres; senha não logada |
 | `SESSION_SECRET` | web | min 32 chars; proibido `changeme` / `secret` |
-| `APP_BASE_URL` | web | origem da app; cookies e links de alerta |
+| `APP_URL` | web | origem da app; cookies e links de alerta |
 | `TZ` / timezone da app | core | default `America/Sao_Paulo` (A2); override via `system_settings` |
 | `META_APP_SECRET` | web (webhook), worker | obrigatório se WhatsApp habilitado |
 | `META_VERIFY_TOKEN` | web | handshake GET |
