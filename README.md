@@ -2,15 +2,31 @@
 
 Aplicação interna para centralizar matrizes de responsabilidade hoje mantidas em Word: demandas, prazos, dependências, acompanhamento e triagem humana.
 
-**`PROMPT.md` é a lei do desenvolvimento.** Não implementar código de produção antes da aprovação explícita da FASE 0.
+**`PROMPT.md` é a lei do desenvolvimento.**
 
 ## Estado atual
 
-**FASE 0 — especificação.** Documentação em [`docs/`](./docs/README.md).
+**FASE 1 — Core (sem WhatsApp, sem IA).** Spec da FASE 0 em [`docs/`](./docs/README.md).
 
-Perguntas Q1–Q5 respondidas. Cloud API / WABA **não** é pré-requisito da FASE 1: ver [`docs/runbooks/whatsapp-waba-brasil.md`](./docs/runbooks/whatsapp-waba-brasil.md).
+```bash
+cp .env.example .env
+docker compose up --build
+# http://localhost:3000
+# login: SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD do .env
+```
 
-Próximo passo: você dizer **pode implementar** → FASE 1 (core local, um ADMIN, sem WhatsApp automático).
+Atalho de desenvolvimento (Postgres precisa estar no ar, Compose ou local):
+
+```bash
+pnpm install
+pnpm db:migrate
+pnpm db:seed
+pnpm dev          # web :3000
+pnpm dev:worker   # health :3001
+pnpm test
+```
+
+Flags: `WHATSAPP_ENABLED=false`, `AI_ENABLED=false`. Transportes não oficiais de WhatsApp estão rejeitados (ADR-007).
 
 ## Agentes
 
