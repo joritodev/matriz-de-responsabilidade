@@ -1,0 +1,43 @@
+﻿name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: matriz
+          POSTGRES_PASSWORD: matriz
+          POSTGRES_DB: matriz
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U matriz -d matriz"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://matriz:matriz@localhost:5432/matriz
+      SESSION_SECRET: ci-session-secret-at-least-32-chars
+      APP_URL: http://localhost:3000
+      WHATSAPP_ENABLED: "false"
+      AI_ENABLED: "false"
+      SEED_ADMIN_EMAIL: admin@local.test
+      SEED_ADMIN_PASSWORD: "123456"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: cp .env.example .env
+      - run: npm run db:migrate
+      - run: npm run db:seed
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build -w @matriz/web
