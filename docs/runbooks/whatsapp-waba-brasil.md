@@ -88,21 +88,37 @@ Ainda **quase sempre exige CNPJ**. Não elimina a Meta; só empacota. O código 
 
 Idem à A, com data. Arquitetura já está pronta para isso. Não compre ferramenta agora “para não perder tempo”.
 
-### Explicitamente fora
+### Opção E — Evolution API / WAHA / Baileys (avaliada e **rejeitada**)
 
-| Ideia | Por quê não |
-|-------|-------------|
-| Baileys / WhatsApp Web / Puppeteer | Banimento, instabilidade, fora da lei do `PROMPT.md` |
-| Mandar o servidor no **seu** WhatsApp pessoal via API não oficial | Mesmo problema |
-| Depender da Groups API da Meta para o grupo dos chefes | Exige conta especial (OBA), limite baixo de participantes; o seu processo já é humano no grupo. Texto copiável é o encaixe certo |
+Pedido do dono (28/08/2026): volume baixo, só um ADMIN, CNPJ/empresa num futuro distante. Por que não QR Code de graça?
+
+**O que essas ferramentas são.** Evolution (modo QR) e WAHA não são “uma API da Meta mais barata”. São clientes que **fingem ser o WhatsApp Web** (quase sempre a biblioteca **Baileys**). Você aponta a câmera no QR, o servidor fica logado como se fosse o celular. Envio “ilimitado sem tarifa” existe porque **não passa pela Cloud API** — e por isso **fere os termos da Meta**.
+
+**O que o volume baixo resolve.** Tarifa oficial. Com dezenas de lembretes/mês, Cloud API custaria pouco. Esse argumento está certo **para preço**.
+
+**O que o volume baixo não resolve.**
+
+| Risco | Efeito neste projeto |
+|-------|----------------------|
+| Banimento / restrição do **número** | O mesmo WhatsApp do grupo dos chefes e das conversas com responsáveis some. O processo Q4 morre. |
+| QR / sessão cai | Sem reconectar, lembretes param. Relatos em 2026 de instância Evolution caindo em 1–2 dias. |
+| Precisa ficar **ligado** | Laptop dormindo = nada sai. VPS barato segura o processo, não o ToS. Contraria “produção sem depender do PC” (ADR-001). |
+| Fingerprint de servidor | A Meta passou a mirar conexão QR em servidor (Baileys, WAHA, Evolution modo QR, WPPConnect, etc.). |
+| LGPD / auditoria | Transporte não autorizado para nomes, telefones e histórico operacional. |
+
+Evolution e WAHA são **a mesma aposta**. WAHA é HTTP mais simples; Evolution tem mais painel. O risco de ban é o da camada Baileys, não o do nome da caixa.
+
+**Ganho real vs copy-ready:** não colar ~N lembretes a responsáveis. O grupo dos chefes **já** é humano. Não vale o número pessoal.
+
+Decisão formal: `docs/adr/ADR-007-whatsapp-unofficial-rejected.md`.
 
 ---
 
 ## 4. Recomendação para este projeto
 
-1. **Agora:** Opção A. FASE 1–2 sem Meta. Fluxo Q4 100% copy-ready.
-2. **Quando existir CNPJ da operação:** Opção B (Cloud API direta), templates `REMINDER_DUE_SOON` e `OVERDUE` em `pt_BR` categoria UTILITY.
-3. **Grupo dos chefes:** permanece humano para sempre no MVP. Mesmo com WABA, o pedido de prorrogação **não** precisa (e não deve) ser um bot falando no grupo. Você cola o texto, negocia, e registra a decisão no app.
-4. **Lembretes aos responsáveis:** aí sim a Cloud API tira trabalho (FASE 3), quando a conta existir.
+1. **Agora:** Opção A. FASE 1–2 sem Meta. Fluxo Q4 100% copy-ready. Evolution/WAHA **não**.
+2. **Futuro distante, se a empresa assumir CNPJ:** Opção B (Cloud API). Tarifas e burocracia ficam com eles.
+3. **Grupo dos chefes:** humano para sempre no MVP. Você cola o texto, negocia, registra a decisão no app.
+4. **Lembretes automáticos a responsáveis:** só com Cloud API, quando existir. Até lá, copy-ready ou você manda na mão a partir da inbox.
 
-Nada disso precisa ser decidido para aprovar a FASE 1. Precisa de CNPJ só para **automação de envio**.
+Nada disso precisa de CNPJ para aprovar a FASE 1.

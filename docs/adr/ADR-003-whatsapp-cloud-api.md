@@ -17,7 +17,7 @@ O PROMPT proíbe unofficial como arquitetura principal e pede a interface `Whats
    - `receiveWebhook(...)` (parse + verificação de assinatura)
    - `getMessageStatus(...)`
 3. **Implementação inicial `MetaWhatsAppProvider`.** Testes usam um `FakeWhatsAppProvider` in-process — não um clone de WhatsApp Web.
-4. **Nada de unofficial** na árvore de produção: sem Puppeteer, sem Baileys, sem sessão de QR code, sem “só enquanto a Cloud API não sai”.
+4. **Nada de unofficial** na árvore de produção (ADR-007): sem Puppeteer, sem Baileys, sem Evolution/WAHA, sem sessão de QR no número do dono.
 5. **Grupos não são dependência.** NotificationTargets enviam para pessoas configuradas; se grupo não estiver autorizado, fallback é envio individual + mensagem pronta para copiar + in-app (A24).
 6. **Persistir webhook bruto antes de processar**, com UNIQUE em `provider_message_id` (idempotência). Verificar assinatura com o `WHATSAPP_APP_SECRET` atual da documentação oficial — não hardcodar regras de janela/template sem conferir o doc da versão vigente (PROMPT §14, §41).
 7. **Envio nunca ocorre dentro da transação de domínio.** Sempre outbox → worker → adapter (ADR-005). Templates renderizados **por destinatário** (`{{nome}}` no singular, I5, A20).
@@ -30,7 +30,7 @@ O PROMPT proíbe unofficial como arquitetura principal e pede a interface `Whats
 - Trocar de provedor no futuro (outro BSP) é um novo adapter, não um rewrite do `core`.
 - Anti-spam, digest e “não cobrar bloqueada” são regra de `packages/core`, não do SDK da Meta (A25–A26).
 - Números ficam em E.164 na tabela `responsibles`; logs mascaram telefone (A35).
-- Q2 (WABA existente vs greenfield) afeta cronograma de credenciais, não esta decisão.
+- Q2 (WABA vs greenfield vs unofficial) foi fechado: sem WABA agora; unofficial rejeitada (ADR-007); Cloud API só se empresa futura assumir.
 
 ## Alternativas rejeitadas
 

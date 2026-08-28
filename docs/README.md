@@ -28,6 +28,7 @@
 - [ADR-004](./adr/ADR-004-human-in-the-loop.md) — humano decide
 - [ADR-005](./adr/ADR-005-background-jobs.md) — pg-boss + outbox
 - [ADR-006](./adr/ADR-006-ai-structured-output.md) — Responses API + Zod
+- [ADR-007](./adr/ADR-007-whatsapp-unofficial-rejected.md) — sem Baileys/Evolution/WAHA
 
 ## Runbooks
 
