@@ -9,11 +9,11 @@ until node -e "const u=process.env.DATABASE_URL; if(!u) process.exit(1)" 2>/dev/
   sleep 1
 done
 
-pnpm --filter @matriz/db migrate
-pnpm --filter @matriz/db seed
+npm run migrate -w @matriz/db
+npm run seed -w @matriz/db
 
 if [ "${PROCESS_ROLE}" = "worker" ]; then
-  exec pnpm --filter @matriz/worker start
+  exec npm run start -w @matriz/worker
 fi
 
-exec pnpm --filter @matriz/web start
+exec npm run start -w @matriz/web

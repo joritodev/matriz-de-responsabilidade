@@ -9,10 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@matriz/config": "workspace:*",
-    "@matriz/core": "workspace:*",
-    "@matriz/db": "workspace:*",
-    "@matriz/shared": "workspace:*",
+    "@matriz/config": "*",
+    "@matriz/core": "*",
+    "@matriz/db": "*",
+    "@matriz/shared": "*",
     "@tanstack/react-table": "^8.21.3",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.40.1",

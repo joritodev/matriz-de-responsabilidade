@@ -9,9 +9,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@matriz/config": "workspace:*",
-    "@matriz/db": "workspace:*",
-    "@matriz/shared": "workspace:*",
+    "@matriz/config": "*",
+    "@matriz/db": "*",
+    "@matriz/shared": "*",
     "pg-boss": "^10.1.6"
   },
   "devDependencies": {

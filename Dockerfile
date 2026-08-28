@@ -1,15 +1,14 @@
 FROM node:22-bookworm-slim
 
-RUN corepack enable
 WORKDIR /app
 
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY package.json package-lock.json ./
 COPY apps ./apps
 COPY packages ./packages
 COPY tsconfig.base.json ./
 
-RUN pnpm install --frozen-lockfile=false
-RUN pnpm --filter @matriz/web build
+RUN npm ci
+RUN npm run build -w @matriz/web
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh

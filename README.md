@@ -18,13 +18,15 @@ docker compose up --build
 Atalho de desenvolvimento (Postgres precisa estar no ar, Compose ou local):
 
 ```bash
-pnpm install
-pnpm db:migrate
-pnpm db:seed
-pnpm dev          # web :3000
-pnpm dev:worker   # health :3001
-pnpm test
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev          # web :3000
+npm run dev:worker   # health :3001
+npm test
 ```
+
+Dados de demonstração (opcional): `npm run db:seed-demo`
 
 Flags: `WHATSAPP_ENABLED=false`, `AI_ENABLED=false`. Transportes não oficiais de WhatsApp estão rejeitados (ADR-007).
 

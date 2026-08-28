@@ -10,12 +10,13 @@
     "generate": "drizzle-kit generate",
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@matriz/config": "workspace:*",
-    "@matriz/core": "workspace:*",
-    "@matriz/shared": "workspace:*",
+    "@matriz/config": "*",
+    "@matriz/core": "*",
+    "@matriz/shared": "*",
     "bcryptjs": "^3.0.2",
     "drizzle-orm": "^0.40.1",
     "postgres": "^3.4.5",
