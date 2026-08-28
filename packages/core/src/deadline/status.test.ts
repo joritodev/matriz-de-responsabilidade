@@ -69,4 +69,17 @@ describe("unit_deadline_status", () => {
       }),
     ).toBe("NOT_APPLICABLE");
   });
+
+  it("aguardando gatilho de dependência", () => {
+    expect(
+      computeDeadlineStatus({
+        baseStatus: "BLOCKED",
+        currentDueDate: null,
+        today: "2026-08-27",
+        holidays: [],
+        dueSoonBusinessDays: 3,
+        waitingForTrigger: true,
+      }),
+    ).toBe("WAITING_FOR_TRIGGER");
+  });
 });

@@ -22,7 +22,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${ibmSans.variable} ${sourceSerif.variable} antialiased`}>{children}</body>
+      <body
+        suppressHydrationWarning
+        className={`${ibmSans.variable} ${sourceSerif.variable} antialiased`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

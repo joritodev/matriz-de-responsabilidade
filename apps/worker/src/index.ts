@@ -1,14 +1,25 @@
 import http from "node:http";
 import PgBoss from "pg-boss";
 import { loadEnv } from "@matriz/config";
+import { createDb, runDeadlineTick } from "@matriz/db";
 import { createLogger } from "@matriz/shared";
-import { createDb } from "@matriz/db";
 
 const env = loadEnv();
 const logger = createLogger({ level: env.logLevel, name: "worker" });
 
 let dbOk = false;
 let bossOk = false;
+
+async function executeDeadlineTick() {
+  const { db, client } = createDb(env.databaseUrl);
+  try {
+    const result = await runDeadlineTick(db);
+    logger.info(result, "deadline-tick concluído");
+    return result;
+  } finally {
+    await client.end();
+  }
+}
 
 async function main() {
   if (env.processRole !== "worker") {
@@ -17,6 +28,7 @@ async function main() {
 
   const { client } = createDb(env.databaseUrl);
   await client`SELECT 1`;
+  await client.end();
   dbOk = true;
 
   const boss = new PgBoss({
@@ -26,7 +38,14 @@ async function main() {
   boss.on("error", (error) => logger.error({ err: error }, "pg-boss error"));
   await boss.start();
   bossOk = true;
-  logger.info("worker up — FASE 1 (sem WhatsApp, sem IA)");
+
+  await boss.schedule("deadline-tick", "*/15 * * * *", {}, { tz: "America/Sao_Paulo" });
+  await boss.work("deadline-tick", async () => {
+    await executeDeadlineTick();
+  });
+
+  await executeDeadlineTick();
+  logger.info("worker up — FASE 2.4 (deadline-tick a cada 15 min)");
 
   const server = http.createServer((req, res) => {
     if (req.url === "/health" || req.url === "/api/health") {

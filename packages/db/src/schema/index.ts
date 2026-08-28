@@ -202,6 +202,123 @@ export const deadlineRules = pgTable(
   (t) => [uniqueIndex("deadline_rules_task_uq").on(t.taskId)],
 );
 
+export const deadlineOccurrences = pgTable(
+  "deadline_occurrences",
+  {
+    id: uuid("id").primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    deadlineRuleId: uuid("deadline_rule_id")
+      .notNull()
+      .references(() => deadlineRules.id, { onDelete: "cascade" }),
+    periodStart: date("period_start").notNull(),
+    periodEnd: date("period_end").notNull(),
+    dueDate: date("due_date").notNull(),
+    status: text("status").notNull(),
+    completedAt: timestamptz("completed_at"),
+    completedBy: uuid("completed_by").references(() => users.id),
+    explanation: jsonb("explanation").notNull(),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("deadline_occurrences_task_period_uq").on(t.taskId, t.periodStart),
+    index("deadline_occurrences_task_open_idx").on(t.taskId, t.status),
+  ],
+);
+
+export const inboxItems = pgTable(
+  "inbox_items",
+  {
+    id: uuid("id").primaryKey(),
+    kind: text("kind").notNull(),
+    status: text("status").notNull().default("OPEN"),
+    taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    matrixId: uuid("matrix_id").references(() => matrices.id, { onDelete: "set null" }),
+    responsibleId: uuid("responsible_id").references(() => responsibles.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    suggestedAction: text("suggested_action"),
+    requiresHumanAction: boolean("requires_human_action").notNull().default(true),
+    snoozedUntil: timestamptz("snoozed_until"),
+    resolvedAt: timestamptz("resolved_at"),
+    resolvedBy: uuid("resolved_by").references(() => users.id),
+    correlationId: uuid("correlation_id").notNull(),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("inbox_items_open_idx")
+      .on(t.status, t.createdAt)
+      .where(sql`${t.status} in ('OPEN', 'SNOOZED')`),
+    index("inbox_items_task_idx").on(t.taskId),
+  ],
+);
+
+export const notificationEvents = pgTable(
+  "notification_events",
+  {
+    id: uuid("id").primaryKey(),
+    dedupeKey: text("dedupe_key").notNull(),
+    channel: text("channel").notNull().default("WHATSAPP_ASSISTED"),
+    kind: text("kind").notNull(),
+    result: text("result").notNull(),
+    taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    responsibleId: uuid("responsible_id").references(() => responsibles.id, { onDelete: "set null" }),
+    messageBody: text("message_body"),
+    sentOn: date("sent_on").notNull(),
+    sentAt: timestamptz("sent_at").notNull().defaultNow(),
+    sentBy: uuid("sent_by").references(() => users.id),
+    correlationId: uuid("correlation_id").notNull(),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("notification_events_dedupe_uq")
+      .on(t.dedupeKey)
+      .where(sql`${t.result} in ('SENT', 'QUEUED')`),
+    index("notification_events_day_idx").on(t.sentOn, t.responsibleId),
+    index("notification_events_task_idx").on(t.taskId, t.sentOn),
+  ],
+);
+
+export const deadlineExtensions = pgTable(
+  "deadline_extensions",
+  {
+    id: uuid("id").primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    occurrenceId: uuid("occurrence_id").references(() => deadlineOccurrences.id, { onDelete: "set null" }),
+    previousDueDate: date("previous_due_date"),
+    requestedDueDate: date("requested_due_date"),
+    approvedDueDate: date("approved_due_date"),
+    requestedByUserId: uuid("requested_by_user_id").references(() => users.id),
+    requestedByResponsibleId: uuid("requested_by_responsible_id").references(() => responsibles.id),
+    reason: text("reason"),
+    requestSource: text("request_source").notNull(),
+    inboxItemId: uuid("inbox_item_id").references(() => inboxItems.id, { onDelete: "set null" }),
+    requestedAt: timestamptz("requested_at").notNull().defaultNow(),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    approvedAt: timestamptz("approved_at"),
+    rejectedBy: uuid("rejected_by").references(() => users.id),
+    rejectedAt: timestamptz("rejected_at"),
+    status: text("status").notNull(),
+    notes: text("notes"),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("deadline_extensions_open_uq")
+      .on(t.taskId)
+      .where(sql`${t.status} = 'REQUESTED'`),
+    index("deadline_extensions_task_requested_idx").on(t.taskId, t.requestedAt),
+    index("deadline_extensions_status_idx")
+      .on(t.status)
+      .where(sql`${t.status} = 'REQUESTED'`),
+  ],
+);
+
 export const taskResponsibles = pgTable(
   "task_responsibles",
   {

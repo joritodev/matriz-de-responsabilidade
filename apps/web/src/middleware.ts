@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/api/health"];
+const PUBLIC = ["/login", "/api/health", "/api/whatsapp/webhook"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -29,8 +29,58 @@ export { transitionOperationalStatus, claimDelivered } from "./status/operationa
 export { isMatrixActive } from "./matrix/active";
 
 export { materializeFixedDate } from "./deadline/fixed-date";
-export { isBusinessDay, addBusinessDays, isWeekend, businessDaysBetween } from "./deadline/calendar";
+export {
+  civilDateFromInstant,
+  materializeBusinessDaysAfterCreation,
+  materializeBusinessDaysAfterDependency,
+  materializeCalendarDaysAfterTrigger,
+  resolveDependencyTriggerInstant,
+} from "./deadline/relative";
+export type { MaterializedRelativeDeadline } from "./deadline/relative";
+export { isBusinessDay, addBusinessDays, addCalendarDays, addCalendarDaysExclusive, isWeekend, businessDaysBetween } from "./deadline/calendar";
+export {
+  addCalendarMonth,
+  lastDayOfMonth,
+  materializeMonthlyOccurrence,
+  nextPeriod,
+  nthBusinessDayOfMonth,
+  periodBounds,
+  periodFromStart,
+  resolveInitialPeriod,
+} from "./deadline/recurring";
+export type { MaterializedOccurrence, RecurrenceConfig } from "./deadline/recurring";
 export { computeDeadlineStatus } from "./deadline/status";
+export { formatDeadlineExplanation } from "./deadline/explain";
+
+export { buildReminderMessage, firstName } from "./notification/reminder-message";
+export type { ReminderMessageInput } from "./notification/reminder-message";
+export {
+  buildDateValidationMessage,
+  dateValidationDueLabel,
+} from "./notification/date-validation";
+export type { DateValidationTaskLine } from "./notification/date-validation";
+export { buildWhatsAppChatLink } from "./notification/wa-link";
+export {
+  buildExtensionApprovedToResponsibleText,
+  buildExtensionRejectedToResponsibleText,
+  buildExtensionRequestToChefsText,
+} from "./extension/messages";
+export type { ExtensionCopyInput } from "./extension/messages";
+export {
+  buildDigestMessage,
+  dedupeKey,
+  planDailyReminders,
+  skipReasonFor,
+} from "./notification/digest";
+export type {
+  DailyReminderPlan,
+  DigestStrategy,
+  PlanOptions,
+  PlannedReminder,
+  ReminderCandidate,
+  SkipReason,
+  SkippedReminder,
+} from "./notification/digest";
 export { attentionRank } from "./dashboard/attention";
 
 export const MATRIX_TYPES = [

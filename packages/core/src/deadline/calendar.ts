@@ -12,10 +12,18 @@ function formatCivil(date: Date): CivilDate {
   return date.toISOString().slice(0, 10);
 }
 
-function addCalendarDays(date: CivilDate, days: number): CivilDate {
+export function addCalendarDays(date: CivilDate, days: number): CivilDate {
   const d = parseCivil(date);
   d.setUTCDate(d.getUTCDate() + days);
   return formatCivil(d);
+}
+
+/** N dias corridos após a âncora (não conta feriado/fim de semana). */
+export function addCalendarDaysExclusive(anchor: CivilDate, amount: number): CivilDate {
+  if (amount <= 0) {
+    throw new Error("amount must be positive");
+  }
+  return addCalendarDays(anchor, amount);
 }
 
 export function isWeekend(date: CivilDate): boolean {

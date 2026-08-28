@@ -8,9 +8,15 @@
   },
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "tsx src/migrate.ts",
-    "seed": "tsx src/seed.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts",
+    "migrate": "tsx --env-file=../../.env src/migrate.ts",
+    "seed": "tsx --env-file=../../.env src/seed.ts",
+    "seed:demo": "tsx --env-file=../../.env scripts/seed-demo.ts",
+    "seed:pdf": "tsx --env-file=../../.env scripts/seed-pdf-matrices.ts",
+    "upgrade:pos-task3": "tsx --env-file=../../.env scripts/upgrade-pos-task3-deadline.ts",
+    "upgrade:geral-task3": "tsx --env-file=../../.env scripts/upgrade-geral-task3-recurring.ts",
+    "deadline-tick": "tsx --env-file=../../.env scripts/run-deadline-tick.ts",
+    "fix-due-today": "tsx --env-file=../../.env scripts/fix-due-today-to-date.ts",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -27,6 +33,7 @@
     "@types/node": "^22.13.10",
     "drizzle-kit": "^0.30.5",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
   }
 }

@@ -25,6 +25,9 @@ export function NewTaskForm({
         Tipo de prazo
         <select name="deadlineType" defaultValue="FIXED_DATE" className="border border-[#d6d3cd] bg-white px-3 py-2">
           <option value="FIXED_DATE">Data fixa</option>
+          <option value="BUSINESS_DAYS_AFTER_CREATION">Dias úteis após cadastro</option>
+          <option value="BUSINESS_DAYS_AFTER_DEPENDENCY">Dias úteis após dependência</option>
+          <option value="RECURRING_BUSINESS_DAY">Recorrente (N-ésimo dia útil do mês)</option>
           <option value="MANUAL">Manual / indefinido</option>
         </select>
       </label>
@@ -33,8 +36,18 @@ export function NewTaskForm({
         <textarea name="description" rows={2} className="border border-[#d6d3cd] bg-white px-3 py-2" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        Prazo (FIXED_DATE)
+        Prazo (data fixa)
         <input name="fixedDate" type="date" className="border border-[#d6d3cd] bg-white px-3 py-2" />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        Dias úteis / N do mês
+        <input
+          name="businessDays"
+          type="number"
+          min={1}
+          placeholder="ex.: 15 ou 3 (recorrente)"
+          className="border border-[#d6d3cd] bg-white px-3 py-2"
+        />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         Responsáveis

@@ -1,28 +1,59 @@
 import Link from "next/link";
-import { dashboardSummary } from "@/lib/queries";
+import { dashboardSummary, listTodayReminders } from "@/lib/queries";
 import { baseStatusLabel, deadlineStatusLabel } from "@/lib/labels";
 import { formatDatePtBr } from "@/lib/dates";
 
 export default async function DashboardPage() {
-  const data = await dashboardSummary();
+  const [data, reminders] = await Promise.all([dashboardSummary(), listTodayReminders()]);
   const cards = [
-    { label: "Vencem hoje", value: data.dueToday },
-    { label: "Próximos", value: data.dueSoon },
-    { label: "Atrasadas", value: data.overdue },
-    { label: "Bloqueadas", value: data.blocked },
-    { label: "Aguardando validação", value: data.waitingValidation },
+    { label: "Vencem hoje", value: data.dueToday, href: "/overview?view=due_today" },
+    { label: "Próximos", value: data.dueSoon, href: "/overview?view=due_soon" },
+    { label: "Atrasadas", value: data.overdue, href: "/overview?view=overdue" },
+    { label: "Aguardando gatilho", value: data.waitingTrigger, href: "/overview" },
+    { label: "Bloqueadas", value: data.blocked, href: "/overview?view=blocked" },
+    { label: "Aguardando validação", value: data.waitingValidation, href: "/inbox?filter=DELIVERY_CLAIM" },
+    { label: "Prorrogações pendentes", value: data.extensionRequests, href: "/inbox?filter=EXTENSION_REQUEST" },
   ];
 
   return (
     <div>
       <h1 className="font-[family-name:var(--font-source-serif)] text-3xl">Dashboard</h1>
       <p className="mt-1 text-sm text-stone-600">O que olhar hoje. Prioridade de atenção não é o número de cadastro.</p>
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+
+      {reminders.reminders.length > 0 ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-[#0f3d3e]/20 bg-[#0f3d3e]/5 px-4 py-3">
+          <p className="text-sm text-stone-700">
+            <strong>{reminders.reminders.length}</strong>{" "}
+            {reminders.reminders.length === 1 ? "pessoa para lembrar" : "pessoas para lembrar"} hoje (passada do fim da
+            manhã).
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/validate-dates"
+              className="border border-[#0f3d3e] px-3 py-1.5 text-sm text-[#0f3d3e]"
+            >
+              Validar datas com responsáveis
+            </Link>
+            <Link
+              href="/reminders"
+              className="border border-[#0f3d3e] bg-[#0f3d3e] px-3 py-1.5 text-sm text-[#fbfaf6]"
+            >
+              Abrir lembretes de hoje
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
         {cards.map((card) => (
-          <div key={card.label} className="border border-[#d6d3cd] bg-[#fbfaf6] px-4 py-3">
+          <Link
+            key={card.label}
+            href={card.href}
+            className="border border-[#d6d3cd] bg-[#fbfaf6] px-4 py-3 transition hover:border-[#0f3d3e]/40"
+          >
             <p className="text-xs uppercase tracking-wide text-stone-500">{card.label}</p>
             <p className="mt-1 text-2xl tabular-nums">{card.value}</p>
-          </div>
+          </Link>
         ))}
       </div>
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-stone-500">Fila de atenção</h2>

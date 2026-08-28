@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "start": "tsx --env-file=../../.env src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@matriz/config": "*",
+    "@matriz/core": "*",
     "@matriz/db": "*",
     "@matriz/shared": "*",
     "pg-boss": "^10.1.6"

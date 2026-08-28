@@ -8,11 +8,15 @@ export type ComputeDeadlineStatusInput = {
   today: CivilDate;
   holidays: CivilDate[];
   dueSoonBusinessDays: number;
+  waitingForTrigger?: boolean;
 };
 
 export function computeDeadlineStatus(input: ComputeDeadlineStatusInput): DeadlineStatus {
   if (input.baseStatus === "COMPLETED" || input.baseStatus === "CANCELLED") {
     return "NOT_APPLICABLE";
+  }
+  if (input.waitingForTrigger) {
+    return "WAITING_FOR_TRIGGER";
   }
   if (!input.currentDueDate) {
     return "NOT_APPLICABLE";

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { bootstrapEnvFile } from "./bootstrap-env";
 
 const booleanish = z
   .union([z.boolean(), z.string()])
@@ -50,8 +51,15 @@ export type AppConfig = {
   pgBossSchema: string;
 };
 
-export function loadEnv(source: Record<string, string | undefined> = process.env): AppConfig {
-  const parsed = baseSchema.safeParse(source);
+export function loadEnv(source?: Record<string, string | undefined>): AppConfig {
+  bootstrapEnvFile();
+  const resolved =
+    source ??
+    ({
+      ...process.env,
+      PROCESS_ROLE: process.env.PROCESS_ROLE ?? "web",
+    } as Record<string, string | undefined>);
+  const parsed = baseSchema.safeParse(resolved);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue?.path.join(".") || "ENV";

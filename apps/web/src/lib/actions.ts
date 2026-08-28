@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { compare } from "bcryptjs";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import {
@@ -12,7 +12,6 @@ import {
   andDependenciesSatisfied,
   assertCanAddDependency,
   claimDelivered,
-  materializeFixedDate,
   nextSequenceNumber,
   normalizeE164,
   transitionOperationalStatus,
@@ -22,7 +21,10 @@ import {
 } from "@matriz/core";
 import {
   auditLogs,
+  deadlineExtensions,
   deadlineRules,
+  inboxItems,
+  notificationEvents,
   matrices,
   outboxMessages,
   responsibles,
@@ -34,8 +36,15 @@ import {
   users,
 } from "@matriz/db";
 import { createSession, destroySession, requireUser, setSessionCookie } from "./auth";
+import { materializeDeadlineRule } from "./deadline-materialize";
+import { todayCivil } from "./dates";
 import { getDb } from "./db";
-import { getDefaultCalendarId } from "./queries";
+import { getDefaultCalendarId, loadHolidayDates } from "./queries";
+import {
+  completeRecurringPeriod,
+  createInitialOccurrence,
+  parseRecurrenceConfig,
+} from "./recurring-occurrences";
 
 function fail(message: string): never {
   throw new Error(message);
@@ -43,8 +52,9 @@ function fail(message: string): never {
 
 function revalidateAll(matrixId?: string, taskId?: string) {
   revalidatePath("/");
-  revalidatePath("/matrices");
+  revalidatePath("/inbox");
   revalidatePath("/overview");
+  revalidatePath("/matrices");
   revalidatePath("/responsibles");
   if (matrixId) revalidatePath(`/matrices/${matrixId}`);
   if (matrixId && taskId) revalidatePath(`/matrices/${matrixId}/tasks/${taskId}`);
@@ -239,21 +249,58 @@ export async function createTaskAction(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const deadlineType = String(formData.get("deadlineType") ?? "FIXED_DATE");
   const fixedDate = String(formData.get("fixedDate") ?? "").trim() || null;
+  const businessDaysRaw = String(formData.get("businessDays") ?? "").trim();
+  const businessDays = businessDaysRaw ? Number(businessDaysRaw) : null;
   const responsibleIds = formData.getAll("responsibleIds").map(String).filter(Boolean);
   const dependsOnIds = formData.getAll("dependsOnIds").map(String).filter(Boolean);
   if (!title) fail("Título obrigatório.");
   if (deadlineType === "FIXED_DATE" && !fixedDate) fail("Informe a data do prazo fixo.");
+  if (
+    (deadlineType === "BUSINESS_DAYS_AFTER_CREATION" ||
+      deadlineType === "BUSINESS_DAYS_AFTER_DEPENDENCY" ||
+      deadlineType === "CALENDAR_DAYS_AFTER_TRIGGER") &&
+    (!businessDays || businessDays <= 0)
+  ) {
+    fail("Informe a quantidade de dias.");
+  }
+  if (
+    (deadlineType === "BUSINESS_DAYS_AFTER_DEPENDENCY" || deadlineType === "CALENDAR_DAYS_AFTER_TRIGGER") &&
+    dependsOnIds.length === 0
+  ) {
+    fail("Prazo após gatilho exige pelo menos um pré-requisito.");
+  }
 
   const db = getDb();
+  const holidayList = await loadHolidayDates();
+  const createdOn = todayCivil();
   try {
     const taskId = await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT id FROM matrices WHERE id = ${matrixId} FOR UPDATE`);
       const existing = await tx.select({ n: tasks.sequenceNumber }).from(tasks).where(eq(tasks.matrixId, matrixId));
       const sequenceNumber = nextSequenceNumber(existing.map((r) => r.n));
       const calendarId = await getDefaultCalendarId();
-      const dates =
-        deadlineType === "FIXED_DATE" && fixedDate ? materializeFixedDate(fixedDate) : null;
       const id = uuidv7();
+
+      const predsForDeadline = dependsOnIds.length
+        ? await tx.select().from(tasks).where(inArray(tasks.id, dependsOnIds))
+        : [];
+      const recurringNth =
+        deadlineType === "RECURRING_BUSINESS_DAY"
+          ? businessDays && businessDays > 0
+            ? businessDays
+            : 3
+          : businessDays;
+      const materialized = materializeDeadlineRule({
+        deadlineType,
+        fixedDate,
+        businessDays: recurringNth,
+        holidays: holidayList,
+        createdOn,
+        predecessors: predsForDeadline.map((p) => ({
+          baseStatus: p.baseStatus,
+          completedAt: p.completedAt,
+        })),
+      });
 
       let baseStatus: BaseStatus = "PENDING";
       if (dependsOnIds.length > 0) {
@@ -273,23 +320,52 @@ export async function createTaskAction(formData: FormData) {
         description: description || null,
         baseStatus,
         extensionStatus: "NONE",
-        originalDueDate: dates?.originalDueDate ?? null,
-        currentDueDate: dates?.currentDueDate ?? null,
+        originalDueDate: materialized.originalDueDate,
+        currentDueDate: materialized.currentDueDate,
         createdBy: user.id,
       });
+      const ruleId = uuidv7();
+      const recurrenceConfig =
+        deadlineType === "RECURRING_BUSINESS_DAY"
+          ? {
+              nth: recurringNth!,
+              unit: "BUSINESS_DAY" as const,
+              period: "MONTH" as const,
+              startPolicy: "CURRENT_PERIOD" as const,
+            }
+          : null;
       await tx.insert(deadlineRules).values({
-        id: uuidv7(),
+        id: ruleId,
         taskId: id,
         deadlineType,
         fixedDate: deadlineType === "FIXED_DATE" ? fixedDate : null,
+        amount: materialized.amount,
+        unit: materialized.amount
+          ? deadlineType === "CALENDAR_DAYS_AFTER_TRIGGER"
+            ? "CALENDAR_DAY"
+            : "BUSINESS_DAY"
+          : null,
+        triggerTaskId:
+          deadlineType === "BUSINESS_DAYS_AFTER_DEPENDENCY" ||
+          deadlineType === "CALENDAR_DAYS_AFTER_TRIGGER"
+            ? (dependsOnIds[0] ?? null)
+            : null,
+        recurrenceConfig,
         calendarId,
-        calculatedDueDate: dates?.currentDueDate ?? null,
-        waitingForTrigger: false,
-        explanation: dates
-          ? { type: "FIXED_DATE", date: dates.currentDueDate, source: "cadastro" }
-          : { type: deadlineType },
+        calculatedDueDate: materialized.currentDueDate,
+        waitingForTrigger: materialized.waitingForTrigger,
+        explanation: materialized.explanation,
         computedAt: new Date(),
       });
+      if (deadlineType === "RECURRING_BUSINESS_DAY") {
+        await createInitialOccurrence(tx, {
+          taskId: id,
+          ruleId,
+          nth: recurringNth!,
+          holidays: holidayList,
+          today: createdOn,
+        });
+      }
       for (const responsibleId of responsibleIds) {
         await tx.insert(taskResponsibles).values({
           id: uuidv7(),
@@ -464,6 +540,7 @@ export async function changeStatusAction(formData: FormData) {
   const to = String(formData.get("to") ?? "") as BaseStatus;
   const actorType = "USER" as ActorType;
   const db = getDb();
+  const holidays = await loadHolidayDates();
   try {
     await db.transaction(async (tx) => {
       const row = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
@@ -479,6 +556,18 @@ export async function changeStatusAction(formData: FormData) {
           userId: user.id,
           reason: "CLAIMS_DELIVERED",
         });
+        await tx.insert(inboxItems).values({
+          id: uuidv7(),
+          kind: "DELIVERY_CLAIM",
+          status: "OPEN",
+          taskId,
+          matrixId: row[0].matrixId,
+          title: `Validar entrega: ${row[0].title}`,
+          body: "Alguém informou que concluiu esta demanda. Confirme antes de marcar como entregue.",
+          suggestedAction: "VALIDATE_DELIVERY",
+          requiresHumanAction: true,
+          correlationId: uuidv7(),
+        });
         return;
       }
       transitionOperationalStatus({
@@ -488,6 +577,38 @@ export async function changeStatusAction(formData: FormData) {
         actorRole: user.role as UserRole,
       });
       const completed = to === "COMPLETED";
+      const [rule] = await tx
+        .select()
+        .from(deadlineRules)
+        .where(eq(deadlineRules.taskId, taskId))
+        .limit(1);
+      const recurrenceConfig = parseRecurrenceConfig(rule?.recurrenceConfig);
+      const isActiveRecurring =
+        completed &&
+        rule?.deadlineType === "RECURRING_BUSINESS_DAY" &&
+        !rule.recurrenceEndedAt &&
+        recurrenceConfig;
+
+      if (isActiveRecurring) {
+        await completeRecurringPeriod(tx, {
+          taskId,
+          ruleId: rule.id,
+          userId: user.id,
+          holidays,
+          recurrenceConfig,
+        });
+        await applyStatus(tx, {
+          taskId,
+          from,
+          to: "PENDING",
+          actorType,
+          userId: user.id,
+          reason: "RECURRING_PERIOD_COMPLETED",
+          completed: false,
+        });
+        return;
+      }
+
       await applyStatus(tx, {
         taskId,
         from,
@@ -498,7 +619,7 @@ export async function changeStatusAction(formData: FormData) {
         completed,
       });
       if (completed) {
-        await satisfyAndUnblock(tx, taskId, user.id);
+        await satisfyAndUnblock(tx, taskId, user.id, holidays);
       }
     });
   } catch (error) {
@@ -553,6 +674,67 @@ async function applyStatus(
   });
 }
 
+async function recomputeDependencyDeadlines(
+  tx: {
+    update: ReturnType<typeof getDb>["update"];
+    select: ReturnType<typeof getDb>["select"];
+  },
+  completedTaskId: string,
+  holidays: string[],
+) {
+  const edges = await tx
+    .select()
+    .from(taskDependencies)
+    .where(eq(taskDependencies.dependsOnTaskId, completedTaskId));
+  const dependentIds = [...new Set(edges.map((e) => e.taskId))];
+  for (const taskId of dependentIds) {
+    const [rule] = await tx.select().from(deadlineRules).where(eq(deadlineRules.taskId, taskId)).limit(1);
+    if (
+      !rule ||
+      !rule.amount ||
+      (rule.deadlineType !== "BUSINESS_DAYS_AFTER_DEPENDENCY" &&
+        rule.deadlineType !== "CALENDAR_DAYS_AFTER_TRIGGER")
+    ) {
+      continue;
+    }
+
+    const deps = await tx.select().from(taskDependencies).where(eq(taskDependencies.taskId, taskId));
+    const predIds = deps.map((d) => d.dependsOnTaskId);
+    const preds = predIds.length ? await tx.select().from(tasks).where(inArray(tasks.id, predIds)) : [];
+    const materialized = materializeDeadlineRule({
+      deadlineType: rule.deadlineType,
+      fixedDate: null,
+      businessDays: rule.amount,
+      holidays,
+      createdOn: todayCivil(),
+      predecessors: preds.map((p) => ({ baseStatus: p.baseStatus, completedAt: p.completedAt })),
+    });
+
+    const [taskRow] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    if (!taskRow) continue;
+
+    await tx
+      .update(deadlineRules)
+      .set({
+        calculatedDueDate: materialized.currentDueDate,
+        waitingForTrigger: materialized.waitingForTrigger,
+        explanation: materialized.explanation,
+        computedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(deadlineRules.id, rule.id));
+
+    await tx
+      .update(tasks)
+      .set({
+        originalDueDate: taskRow.originalDueDate ?? materialized.originalDueDate,
+        currentDueDate: materialized.currentDueDate,
+        updatedAt: new Date(),
+      })
+      .where(eq(tasks.id, taskId));
+  }
+}
+
 async function satisfyAndUnblock(
   tx: {
     update: ReturnType<typeof getDb>["update"];
@@ -561,6 +743,7 @@ async function satisfyAndUnblock(
   },
   completedTaskId: string,
   userId: string,
+  holidays: string[],
 ) {
   const blocked = await tx
     .select()
@@ -599,6 +782,7 @@ async function satisfyAndUnblock(
       reason: "DEPENDENCIES_SATISFIED",
     });
   }
+  await recomputeDependencyDeadlines(tx, completedTaskId, holidays);
   await tx.insert(outboxMessages).values({
     id: uuidv7(),
     aggregateType: "Task",
@@ -633,4 +817,446 @@ export async function addNoteAction(formData: FormData) {
     after: { note: body.slice(0, 120) },
   });
   revalidateAll(matrixId, taskId);
+}
+
+/**
+ * Registra que o admin enviou o lembrete pelo WhatsApp dele (ADR-008).
+ * Alimenta o dedupe de §7.1: a mesma tarefa/pessoa não reaparece no mesmo dia.
+ */
+export async function markReminderSentAction(formData: FormData) {
+  const user = await requireUser();
+  const responsibleId = String(formData.get("responsibleId") ?? "");
+  const kind = String(formData.get("kind") ?? "SINGLE");
+  const message = String(formData.get("message") ?? "");
+  const dedupeKeys = String(formData.get("dedupeKeys") ?? "")
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  if (!responsibleId || dedupeKeys.length === 0) fail("Lembrete inválido.");
+
+  const db = getDb();
+  const sentOn = todayCivil();
+  const correlationId = uuidv7();
+
+  for (const key of dedupeKeys) {
+    const taskId = key.split(":")[1] ?? null;
+    await db
+      .insert(notificationEvents)
+      .values({
+        id: uuidv7(),
+        dedupeKey: key,
+        channel: "WHATSAPP_ASSISTED",
+        kind,
+        result: "SENT",
+        taskId,
+        responsibleId,
+        messageBody: message.slice(0, 2000),
+        sentOn,
+        sentBy: user.id,
+        correlationId,
+      })
+      .onConflictDoNothing();
+  }
+
+  await writeAudit({
+    entityType: "Responsible",
+    entityId: responsibleId,
+    action: "UPDATE",
+    actorUserId: user.id,
+    after: { reminderSent: kind, tasks: dedupeKeys.length, channel: "WHATSAPP_ASSISTED" },
+  });
+
+  revalidatePath("/reminders");
+  revalidatePath("/inbox");
+}
+
+export async function requestExtensionAction(formData: FormData) {
+  const user = await requireUser();
+  const taskId = String(formData.get("taskId") ?? "");
+  const matrixId = String(formData.get("matrixId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const requestedDueDate = String(formData.get("requestedDueDate") ?? "").trim() || null;
+  if (!taskId || !reason) fail("Informe o motivo do pedido.");
+
+  const db = getDb();
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  if (!task) fail("Tarefa não encontrada.");
+
+  const [open] = await db
+    .select({ id: deadlineExtensions.id })
+    .from(deadlineExtensions)
+    .where(and(eq(deadlineExtensions.taskId, taskId), eq(deadlineExtensions.status, "REQUESTED")))
+    .limit(1);
+  if (open) fail("Já existe um pedido em análise para esta tarefa.");
+
+  const extId = uuidv7();
+  const inboxId = uuidv7();
+
+  await db.transaction(async (tx) => {
+    await tx.insert(deadlineExtensions).values({
+      id: extId,
+      taskId,
+      previousDueDate: task.currentDueDate,
+      requestedDueDate,
+      requestedByUserId: user.id,
+      reason,
+      requestSource: "USER",
+      inboxItemId: inboxId,
+      status: "REQUESTED",
+    });
+    await tx
+      .update(tasks)
+      .set({ extensionStatus: "REQUESTED", updatedAt: new Date() })
+      .where(eq(tasks.id, taskId));
+    await tx.insert(inboxItems).values({
+      id: inboxId,
+      kind: "EXTENSION_REQUEST",
+      status: "OPEN",
+      taskId,
+      matrixId,
+      title: `Pedido de prorrogação: ${task.title}`,
+      body: reason,
+      suggestedAction: "COPY_TO_CHEFS_GROUP",
+      requiresHumanAction: true,
+      correlationId: uuidv7(),
+    });
+  });
+
+  await writeAudit({
+    entityType: "DeadlineExtension",
+    entityId: extId,
+    action: "CREATE",
+    actorUserId: user.id,
+    after: { status: "REQUESTED", requestedDueDate, reason: reason.slice(0, 120) },
+  });
+
+  revalidateAll(matrixId, taskId);
+}
+
+export async function approveExtensionAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") fail("Somente administrador aprova prorrogação.");
+
+  const extensionId = String(formData.get("extensionId") ?? "");
+  const matrixId = String(formData.get("matrixId") ?? "");
+  const taskId = String(formData.get("taskId") ?? "");
+  const approvedDueDate = String(formData.get("approvedDueDate") ?? "").trim();
+  if (!extensionId || !approvedDueDate) fail("Informe a data aprovada.");
+
+  const db = getDb();
+  const [ext] = await db.select().from(deadlineExtensions).where(eq(deadlineExtensions.id, extensionId)).limit(1);
+  if (!ext || ext.status !== "REQUESTED") fail("Pedido não encontrado ou já decidido.");
+
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  if (!task) fail("Tarefa não encontrada.");
+
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    await tx
+      .update(deadlineExtensions)
+      .set({
+        status: "APPROVED",
+        approvedDueDate,
+        approvedBy: user.id,
+        approvedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(deadlineExtensions.id, extensionId));
+
+    await tx
+      .update(tasks)
+      .set({
+        currentDueDate: approvedDueDate,
+        extensionStatus: "APPROVED",
+        extensionCount: task.extensionCount + 1,
+        cachedDeadlineStatus: null,
+        deadlineStatusComputedAt: null,
+        deadlineStatusAsOf: null,
+        updatedAt: now,
+      })
+      .where(eq(tasks.id, taskId));
+
+    const [rule] = await tx.select().from(deadlineRules).where(eq(deadlineRules.taskId, taskId)).limit(1);
+    if (rule?.deadlineType === "FIXED_DATE") {
+      await tx
+        .update(deadlineRules)
+        .set({
+          fixedDate: approvedDueDate,
+          calculatedDueDate: approvedDueDate,
+          computedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(deadlineRules.id, rule.id));
+    }
+
+    if (ext.inboxItemId) {
+      await tx
+        .update(inboxItems)
+        .set({ status: "RESOLVED", resolvedAt: now, resolvedBy: user.id, updatedAt: now })
+        .where(eq(inboxItems.id, ext.inboxItemId));
+    }
+  });
+
+  await writeAudit({
+    entityType: "DeadlineExtension",
+    entityId: extensionId,
+    action: "UPDATE",
+    actorUserId: user.id,
+    before: { currentDueDate: task.currentDueDate },
+    after: { status: "APPROVED", approvedDueDate },
+  });
+
+  revalidateAll(matrixId, taskId);
+}
+
+export async function rejectExtensionAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") fail("Somente administrador rejeita prorrogação.");
+
+  const extensionId = String(formData.get("extensionId") ?? "");
+  const matrixId = String(formData.get("matrixId") ?? "");
+  const taskId = String(formData.get("taskId") ?? "");
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  const db = getDb();
+  const [ext] = await db.select().from(deadlineExtensions).where(eq(deadlineExtensions.id, extensionId)).limit(1);
+  if (!ext || ext.status !== "REQUESTED") fail("Pedido não encontrado ou já decidido.");
+
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    await tx
+      .update(deadlineExtensions)
+      .set({
+        status: "REJECTED",
+        rejectedBy: user.id,
+        rejectedAt: now,
+        notes,
+        updatedAt: now,
+      })
+      .where(eq(deadlineExtensions.id, extensionId));
+
+    await tx
+      .update(tasks)
+      .set({ extensionStatus: "REJECTED", updatedAt: now })
+      .where(eq(tasks.id, taskId));
+
+    if (ext.inboxItemId) {
+      await tx
+        .update(inboxItems)
+        .set({ status: "RESOLVED", resolvedAt: now, resolvedBy: user.id, updatedAt: now })
+        .where(eq(inboxItems.id, ext.inboxItemId));
+    }
+  });
+
+  await writeAudit({
+    entityType: "DeadlineExtension",
+    entityId: extensionId,
+    action: "UPDATE",
+    actorUserId: user.id,
+    after: { status: "REJECTED" },
+  });
+
+  revalidateAll(matrixId, taskId);
+}
+
+export async function updateTaskAction(formData: FormData) {
+  const user = await requireUser();
+  const taskId = String(formData.get("taskId") ?? "");
+  const matrixId = String(formData.get("matrixId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const fixedDate = String(formData.get("fixedDate") ?? "").trim() || null;
+  if (!taskId || !title) fail("Título obrigatório.");
+
+  const db = getDb();
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  if (!task) fail("Tarefa não encontrada.");
+
+  const [rule] = await db.select().from(deadlineRules).where(eq(deadlineRules.taskId, taskId)).limit(1);
+  const now = new Date();
+
+  await db.transaction(async (tx) => {
+    const taskPatch: Record<string, unknown> = {
+      title,
+      description: description || null,
+      updatedAt: now,
+    };
+
+    if (rule?.deadlineType === "FIXED_DATE" && fixedDate) {
+      taskPatch.currentDueDate = fixedDate;
+      if (!task.originalDueDate) taskPatch.originalDueDate = fixedDate;
+      taskPatch.cachedDeadlineStatus = null;
+      taskPatch.deadlineStatusComputedAt = null;
+      taskPatch.deadlineStatusAsOf = null;
+
+      await tx
+        .update(deadlineRules)
+        .set({
+          fixedDate,
+          calculatedDueDate: fixedDate,
+          computedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(deadlineRules.id, rule.id));
+    }
+
+    await tx.update(tasks).set(taskPatch).where(eq(tasks.id, taskId));
+  });
+
+  await writeAudit({
+    entityType: "Task",
+    entityId: taskId,
+    action: "UPDATE",
+    actorUserId: user.id,
+    after: { title, fixedDate },
+  });
+
+  revalidateAll(matrixId, taskId);
+}
+
+export async function confirmDeliveryAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") fail("Somente administrador confirma entrega.");
+
+  const taskId = String(formData.get("taskId") ?? "");
+  const matrixId = String(formData.get("matrixId") ?? "");
+  if (!taskId) fail("Tarefa inválida.");
+
+  const db = getDb();
+  const holidays = await loadHolidayDates();
+  const actorType = "USER" as ActorType;
+
+  try {
+    await db.transaction(async (tx) => {
+      const [row] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+      if (!row) throw new Error("missing");
+      const from = row.baseStatus as BaseStatus;
+      if (from !== "WAITING_FOR_VALIDATION") {
+        throw new DomainError("NOT_WAITING", "Tarefa não está aguardando validação.");
+      }
+      transitionOperationalStatus({
+        from,
+        to: "COMPLETED",
+        actorType,
+        actorRole: user.role as UserRole,
+      });
+
+      const [rule] = await tx
+        .select()
+        .from(deadlineRules)
+        .where(eq(deadlineRules.taskId, taskId))
+        .limit(1);
+      const recurrenceConfig = parseRecurrenceConfig(rule?.recurrenceConfig);
+      const isActiveRecurring =
+        rule?.deadlineType === "RECURRING_BUSINESS_DAY" && !rule.recurrenceEndedAt && recurrenceConfig;
+
+      if (isActiveRecurring) {
+        await completeRecurringPeriod(tx, {
+          taskId,
+          ruleId: rule.id,
+          userId: user.id,
+          holidays,
+          recurrenceConfig,
+        });
+        await applyStatus(tx, {
+          taskId,
+          from,
+          to: "PENDING",
+          actorType,
+          userId: user.id,
+          reason: "RECURRING_PERIOD_COMPLETED",
+          completed: false,
+        });
+      } else {
+        await applyStatus(tx, {
+          taskId,
+          from,
+          to: "COMPLETED",
+          actorType,
+          userId: user.id,
+          reason: "ADMIN_VALIDATED",
+          completed: true,
+        });
+        await satisfyAndUnblock(tx, taskId, user.id, holidays);
+      }
+
+      const now = new Date();
+      await tx
+        .update(inboxItems)
+        .set({ status: "RESOLVED", resolvedAt: now, resolvedBy: user.id, updatedAt: now })
+        .where(
+          and(eq(inboxItems.taskId, taskId), eq(inboxItems.kind, "DELIVERY_CLAIM"), eq(inboxItems.status, "OPEN")),
+        );
+    });
+  } catch (error) {
+    fail(error instanceof DomainError ? error.message : "Não foi possível confirmar a entrega.");
+  }
+  revalidateAll(matrixId, taskId);
+}
+
+export async function rejectDeliveryClaimAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") fail("Somente administrador recusa validação.");
+
+  const taskId = String(formData.get("taskId") ?? "");
+  const matrixId = String(formData.get("matrixId") ?? "");
+  if (!taskId) fail("Tarefa inválida.");
+
+  const db = getDb();
+  const actorType = "USER" as ActorType;
+
+  try {
+    await db.transaction(async (tx) => {
+      const [row] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+      if (!row) throw new Error("missing");
+      const from = row.baseStatus as BaseStatus;
+      if (from !== "WAITING_FOR_VALIDATION") {
+        throw new DomainError("NOT_WAITING", "Tarefa não está aguardando validação.");
+      }
+      transitionOperationalStatus({
+        from,
+        to: "IN_PROGRESS",
+        actorType,
+        actorRole: user.role as UserRole,
+      });
+      await applyStatus(tx, {
+        taskId,
+        from,
+        to: "IN_PROGRESS",
+        actorType,
+        userId: user.id,
+        reason: "DELIVERY_REJECTED",
+      });
+
+      const now = new Date();
+      await tx
+        .update(inboxItems)
+        .set({ status: "RESOLVED", resolvedAt: now, resolvedBy: user.id, updatedAt: now })
+        .where(
+          and(eq(inboxItems.taskId, taskId), eq(inboxItems.kind, "DELIVERY_CLAIM"), eq(inboxItems.status, "OPEN")),
+        );
+    });
+  } catch (error) {
+    fail(error instanceof DomainError ? error.message : "Não foi possível recusar a entrega.");
+  }
+  revalidateAll(matrixId, taskId);
+}
+
+export async function resolveInboxItemAction(formData: FormData) {
+  const user = await requireUser();
+  const itemId = String(formData.get("itemId") ?? "");
+  if (!itemId) fail("Item inválido.");
+  const db = getDb();
+  await db
+    .update(inboxItems)
+    .set({
+      status: "RESOLVED",
+      resolvedAt: new Date(),
+      resolvedBy: user.id,
+      updatedAt: new Date(),
+    })
+    .where(eq(inboxItems.id, itemId));
+  revalidatePath("/inbox");
+  revalidatePath("/");
 }
