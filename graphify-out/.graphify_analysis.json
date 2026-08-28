@@ -786,8 +786,8 @@
       "degree": 15
     },
     {
-      "id": "docs_00_product_brief_brief_de_produto_matriz_de_responsabilidade",
-      "label": "Brief de produto — Matriz de Responsabilidade",
+      "id": "docs_01_functional_spec_especificação_funcional_matriz_de_responsabilidade",
+      "label": "Especificação funcional — Matriz de Responsabilidade",
       "degree": 14
     }
   ],
@@ -810,7 +810,7 @@
     },
     {
       "type": "isolated_nodes",
-      "question": "What connects `Modelo dos Sub-agents`, `Papel do agente principal`, `Fases` to the rest of the system?",
+      "question": "What connects `11. Prompt versionado (PROMPT §38)`, `12.1 Gatilhos de fallback`, `12.2 Comportamento obrigatório` to the rest of the system?",
       "why": "496 weakly-connected nodes found - possible documentation gaps or missing edges."
     },
     {

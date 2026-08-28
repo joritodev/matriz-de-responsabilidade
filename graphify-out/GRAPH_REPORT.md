@@ -64,7 +64,7 @@
 7. `02 — Modelo de domínio e banco de dados` - 15 edges
 8. `04 — Motor de prazos (Deadline Engine)` - 15 edges
 9. `08 — Segurança, threat model e LGPD` - 15 edges
-10. `Brief de produto — Matriz de Responsabilidade` - 14 edges
+10. `Especificação funcional — Matriz de Responsabilidade` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
 - None detected - all connections are within the same source files.
@@ -220,7 +220,7 @@ Cohesion: 0.67
 Nodes (3): Agentes, Estado atual, Matriz de Responsabilidade
 
 ## Knowledge Gaps
-- **496 isolated node(s):** `Modelo dos Sub-agents`, `Papel do agente principal`, `Fases`, `Graphify (skill de primeira classe)`, `PAPEL` (+491 more)
+- **496 isolated node(s):** `11. Prompt versionado (PROMPT §38)`, `12.1 Gatilhos de fallback`, `12.2 Comportamento obrigatório`, `13. Human-in-the-loop — Central de Pendências (PROMPT §20)`, `14.1 Frase explícita quando o sistema não decidiu sozinho` (+491 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -233,7 +233,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.230) - this node is a cross-community bridge._
 - **Why does `07 — IA para triagem (human-in-the-loop)` connect `Community 0` to `Community 16`, `Community 19`?**
   _High betweenness centrality (0.169) - this node is a cross-community bridge._
-- **What connects `Modelo dos Sub-agents`, `Papel do agente principal`, `Fases` to the rest of the system?**
+- **What connects `11. Prompt versionado (PROMPT §38)`, `12.1 Gatilhos de fallback`, `12.2 Comportamento obrigatório` to the rest of the system?**
   _496 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._

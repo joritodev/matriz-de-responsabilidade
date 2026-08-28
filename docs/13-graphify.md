@@ -18,6 +18,8 @@ Pacote PyPI atual: `graphifyy` (CLI continua `graphify`). Versão usada na FASE 
 | `.agents/skills/graphify/` | Mesma skill para outros agentes. |
 | `graphify-out/graph.json` | Grafo da spec (nós = seções/docs). |
 | `graphify-out/GRAPH_REPORT.md` | Hubs e god nodes. |
+| `graphify-out/graph.html` | Visualização interativa (abrir no browser). |
+| `graphify-out/graph-preview.png` | Captura estática do grafo. |
 | `.graphifyignore` | Exclui `.git`, `node_modules`, o próprio output. |
 
 ---
