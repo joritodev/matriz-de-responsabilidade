@@ -54,7 +54,7 @@ Scaffold + domínio mínimo + tabela + dashboard. Cada slice é vertical.
 
 ### Slice 1.1 — Fundações
 
-Monorepo (`apps/web`, `apps/worker`, `packages/*`), Docker Compose (`postgres`, `web`, `worker`), ENV Zod (`packages/config`), Pino, healthchecks, Drizzle + primeira migration, seed `ADMIN` + calendário vazio, login cookie httpOnly.
+Monorepo (`apps/web`, `apps/worker`, `packages/*`), Docker Compose (`postgres`, `web`, `worker`), ENV Zod (`packages/config`), Pino, healthchecks, Drizzle + primeira migration, seed **um** `ADMIN` (Q1) + calendário vazio, login cookie httpOnly.
 
 **Aceite:** `docker compose up` abre login em `http://localhost:3000`. Sem Meta. Sem OpenAI. `WHATSAPP_ENABLED=false`, `AI_ENABLED=false`.
 
@@ -188,9 +188,9 @@ In-app; WhatsApp do admin via outbox se regra permitir. Texto deixa explícito q
 
 REQUESTED → ADMIN aprova / ajusta / rejeita. Histórico. Recalcula automações. Casos F completo.
 
-### Slice 5.2 — Sócios
+### Slice 5.2 — Chefes (Q4)
 
-`NotificationTargets`. Mensagem estruturada §13. Fallback copy-ready + in-app (A24). Sem dependência de grupo.
+Não há envio ao grupo via API. Inbox no `REQUESTED`: **copiar texto para o grupo dos chefes**. Depois da decisão humana no app: **copiar texto ao responsável** (aprovado ou recusado + “vamos reduzir o atraso”). WABA opcional só para o trecho do responsável.
 
 ### Slice 5.3 — Alertas admin WhatsApp
 

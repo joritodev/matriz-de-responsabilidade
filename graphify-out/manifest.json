@@ -1,0 +1,164 @@
+{
+  "AGENTS.md": {
+    "mtime": 1787875340.8869317,
+    "seen": 1787875392.025565,
+    "ast_hash": "231c4b91f4477026ed8bff1c122bbadd",
+    "semantic_hash": ""
+  },
+  "PROMPT.md": {
+    "mtime": 1787872580.2984717,
+    "seen": 1787875184.9225352,
+    "ast_hash": "6f692eec2ca7a8a998cb1ea758f393f6",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1787875379.6988277,
+    "seen": 1787875392.0255713,
+    "ast_hash": "d13b27346e8eb728e20a1b694545c406",
+    "semantic_hash": ""
+  },
+  "docs/00-product-brief.md": {
+    "mtime": 1787875340.8989315,
+    "seen": 1787875392.0255725,
+    "ast_hash": "e9a9c2a286cf662c9366e4f71f8c9efe",
+    "semantic_hash": ""
+  },
+  "docs/01-functional-spec.md": {
+    "mtime": 1787875391.5467968,
+    "seen": 1787875392.0255735,
+    "ast_hash": "e15d7f62ac8df243f88d1db49ef3c7af",
+    "semantic_hash": ""
+  },
+  "docs/02-domain-model.md": {
+    "mtime": 1787873166.125005,
+    "seen": 1787875184.9225392,
+    "ast_hash": "076337e61d15260946729eaed6ef6259",
+    "semantic_hash": ""
+  },
+  "docs/03-state-machines.md": {
+    "mtime": 1787873256.3407993,
+    "seen": 1787875184.9225402,
+    "ast_hash": "2a55263cf7e2c2dcb936709ab85ef555",
+    "semantic_hash": ""
+  },
+  "docs/04-deadline-engine.md": {
+    "mtime": 1787873376.6687138,
+    "seen": 1787875184.922541,
+    "ast_hash": "1083d0aa9baab142141645cd92ea0d01",
+    "semantic_hash": ""
+  },
+  "docs/05-architecture.md": {
+    "mtime": 1787875391.538797,
+    "seen": 1787875392.025578,
+    "ast_hash": "ca2f9e398242399c0a1b2a3a227ce47e",
+    "semantic_hash": ""
+  },
+  "docs/06-whatsapp-integration.md": {
+    "mtime": 1787875379.6948278,
+    "seen": 1787875392.0255785,
+    "ast_hash": "d4ae97697880e15a7fe10be17eadcc54",
+    "semantic_hash": ""
+  },
+  "docs/07-ai-triage.md": {
+    "mtime": 1787873153.1810517,
+    "seen": 1787875184.9225433,
+    "ast_hash": "dc386bac5086aeb58483a1b3d4baeae2",
+    "semantic_hash": ""
+  },
+  "docs/08-security.md": {
+    "mtime": 1787873476.256716,
+    "seen": 1787875184.9225445,
+    "ast_hash": "93e5cf964a5f9147b391143a15def5ea",
+    "semantic_hash": ""
+  },
+  "docs/09-test-plan.md": {
+    "mtime": 1787873159.6770275,
+    "seen": 1787875184.9225452,
+    "ast_hash": "dafe6f264a274333de88db5e72ba0f54",
+    "semantic_hash": ""
+  },
+  "docs/10-roadmap.md": {
+    "mtime": 1787875379.6628277,
+    "seen": 1787875392.0255823,
+    "ast_hash": "b40575d98f2a22e67f49f8acdce163c3",
+    "semantic_hash": ""
+  },
+  "docs/11-open-questions.md": {
+    "mtime": 1787875257.8071692,
+    "seen": 1787875392.025583,
+    "ast_hash": "46cd368be4d9f0992defd97e9dc2ca5b",
+    "semantic_hash": ""
+  },
+  "docs/12-ux-spec.md": {
+    "mtime": 1787873598.896495,
+    "seen": 1787875184.922547,
+    "ast_hash": "508cb0cbd18c4767925be46715aae7bc",
+    "semantic_hash": ""
+  },
+  "docs/README.md": {
+    "mtime": 1787875380.022827,
+    "seen": 1787875392.0255861,
+    "ast_hash": "b3c673e655b04c1c6a735e15a238df71",
+    "semantic_hash": ""
+  },
+  "docs/adr/ADR-001-web-local-first.md": {
+    "mtime": 1787873207.664888,
+    "seen": 1787875184.9225485,
+    "ast_hash": "1c3b1322122022ccec87f53b1b9a50b4",
+    "semantic_hash": ""
+  },
+  "docs/adr/ADR-002-postgresql.md": {
+    "mtime": 1787873476.288716,
+    "seen": 1787875184.9225492,
+    "ast_hash": "60820184eeb44cf503421b9185be0952",
+    "semantic_hash": ""
+  },
+  "docs/adr/ADR-003-whatsapp-cloud-api.md": {
+    "mtime": 1787873207.644888,
+    "seen": 1787875184.9225497,
+    "ast_hash": "b539bec7c5b587a59b31fe65d1549029",
+    "semantic_hash": ""
+  },
+  "docs/adr/ADR-004-human-in-the-loop.md": {
+    "mtime": 1787873208.508886,
+    "seen": 1787875184.9225504,
+    "ast_hash": "f9c68caf60b8a268400b78a8dea8c9b2",
+    "semantic_hash": ""
+  },
+  "docs/adr/ADR-005-background-jobs.md": {
+    "mtime": 1787873476.256716,
+    "seen": 1787875184.9225512,
+    "ast_hash": "3b2c59a43108173347fcd9785f8ab430",
+    "semantic_hash": ""
+  },
+  "docs/adr/ADR-006-ai-structured-output.md": {
+    "mtime": 1787873208.500886,
+    "seen": 1787875184.922552,
+    "ast_hash": "53a2f97da0b572961ff0f2f52d6f2517",
+    "semantic_hash": ""
+  },
+  "docs/assumptions.md": {
+    "mtime": 1787875289.0430772,
+    "seen": 1787875392.025592,
+    "ast_hash": "95f3b3b50207a2bfb273f2452d0262d0",
+    "semantic_hash": ""
+  },
+  "docs/runbooks/local-dev.md": {
+    "mtime": 1787873598.8724952,
+    "seen": 1787875184.9225535,
+    "ast_hash": "2ce632f93e659de76266affe04141d40",
+    "semantic_hash": ""
+  },
+  "docs/13-graphify.md": {
+    "mtime": 1787875257.7951694,
+    "seen": 1787875392.0255852,
+    "ast_hash": "fc215cdadd3b2f6a02baa4b507d8f5e5",
+    "semantic_hash": ""
+  },
+  "docs/runbooks/whatsapp-waba-brasil.md": {
+    "mtime": 1787875257.903169,
+    "seen": 1787875392.0255935,
+    "ast_hash": "8c4a53dcc9d29da348eca40144d32fd9",
+    "semantic_hash": ""
+  }
+}

@@ -203,13 +203,13 @@ Imposições (*Groups API*, 16/06/2026 + *Group messaging*, 21/05/2026):
 - Envio: mesmo `POST /{phone-number-id}/messages`, com `recipient_type: "group"` e `to: {group_id}`.
 - Status de grupo: webhook agregado (um POST com vários `status` objects para o mesmo wamid).
 
-**Decisão de produto (A24):** o sistema **não depende** de grupo. `WHATSAPP_GROUP` é um `NotificationTarget` opcional, ligado só se (a) a conta for OBA, (b) o admin autorizar explicitamente, (c) o `group_id` estiver configurado e saudável. Fallback obrigatório e default:
+**Decisão de produto (A24, Q4):** o grupo dos chefes é **humano**. Default e MVP:
 
-1. envio individual WhatsApp para cada sócio em `NotificationTargets`;
-2. mensagem **pronta para copiar** na UI (mesmo texto do exemplo da §13);
+1. no `REQUESTED`, mensagem **pronta para copiar** para o grupo;
+2. na decisão, mensagem **pronta para copiar** (ou template, se WABA) para o responsável;
 3. notificação **in-app**.
 
-Nunca bloquear aprovação de prorrogação porque grupo falhou.
+`WHATSAPP_GROUP` na Cloud API **não** é usado. Aprovação nunca depende de grupo/API. Sem WABA, o produto inteiro opera assim (`docs/runbooks/whatsapp-waba-brasil.md`).
 
 ### 2.6 Limites, throughput, qualidade, políticas
 

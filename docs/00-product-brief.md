@@ -337,17 +337,17 @@ Lista normativa (produto). Complementa a seção 47 do PROMPT.
 
 ---
 
-## 12. Perguntas bloqueantes (não inventar resposta)
+## 12. Perguntas do dono (respondidas em 27/08/2026)
 
-Registradas para o integrator (`docs/11-open-questions.md`). O produto segue as assumptions indicadas até decisão explícita do dono:
+Ver `docs/11-open-questions.md`.
 
-- **Q1.** Auth no dia 1: só um `ADMIN` ou já múltiplos `OPERATOR`s? *Trabalho: modelo com os dois papéis; UI FASE 1 pode ser ADMIN-only.*
-- **Q2.** Já existe WABA / número na Meta Cloud API, ou setup greenfield? *Não bloqueia spec de produto web; bloqueia go-live WhatsApp.*
-- **Q3.** Recorrência mensal: ao “concluir” o mês, a tarefa volta a `PENDING` no próximo período automaticamente? *Assumption de trabalho: A16 — sim, registra ocorrência e abre o próximo período.*
-- **Q4.** Sócios: quais pessoas/canais recebem prorrogação aprovada no seed? *A30 — lista configurável; seed vazio ou só o admin até Q4.*
-- **Q5.** Vários responsáveis: um “entreguei” valida a tarefa inteira? *Assumption de trabalho: a tarefa é una; um claim abre `WAITING_FOR_VALIDATION` da tarefa toda.*
+- **Q1.** Só o dono é `ADMIN`. Sem Operators no MVP.
+- **Q2.** Sem WABA/CNPJ agora. Cloud API fica para quando houver empresa verificada. Até lá: copy-ready. Runbook: `docs/runbooks/whatsapp-waba-brasil.md`.
+- **Q3.** Recorrência reabre o próximo período (A16).
+- **Q4.** Chefes no grupo humano: texto no **pedido**; resposta ao responsável na **decisão**.
+- **Q5.** Um “entreguei” valida a tarefa inteira.
 
-Nenhuma dessas perguntas impede arquitetura, modelo de domínio ou esta spec. Impedem apenas seed, permissões finas e copy de onboarding.
+Respostas fechadas. FASE 1 ainda exige aprovação explícita (“pode implementar”).
 
 ---
 
