@@ -6,7 +6,7 @@
 
 1. [00-product-brief.md](./00-product-brief.md) — visão, problema, não-objetivos
 2. [01-functional-spec.md](./01-functional-spec.md) — casos de uso, regras, aceite
-3. [assumptions.md](./assumptions.md) — A1–A36 e inconsistências I1–I10
+3. [assumptions.md](./assumptions.md) — A1–A38 e inconsistências I1–I10
 4. [02-domain-model.md](./02-domain-model.md) — modelo relacional
 5. [03-state-machines.md](./03-state-machines.md) — status operacional, prazo, prorrogação
 6. [04-deadline-engine.md](./04-deadline-engine.md) — dias úteis, tipos de prazo
@@ -16,8 +16,9 @@
 10. [08-security.md](./08-security.md) — ameaças, LGPD, authZ
 11. [09-test-plan.md](./09-test-plan.md) — TDD e casos A–G
 12. [10-roadmap.md](./10-roadmap.md) — fatias verticais
-13. [11-open-questions.md](./11-open-questions.md) — as 5 perguntas ao dono
+13. [11-open-questions.md](./11-open-questions.md) — Q1–Q5 **respondidas**
 14. [12-ux-spec.md](./12-ux-spec.md) — telas e comportamento
+15. [13-graphify.md](./13-graphify.md) — skill Graphify (grafo da spec)
 
 ## ADRs
 
@@ -27,10 +28,12 @@
 - [ADR-004](./adr/ADR-004-human-in-the-loop.md) — humano decide
 - [ADR-005](./adr/ADR-005-background-jobs.md) — pg-boss + outbox
 - [ADR-006](./adr/ADR-006-ai-structured-output.md) — Responses API + Zod
+- [ADR-007](./adr/ADR-007-whatsapp-unofficial-rejected.md) — sem Baileys/Evolution/WAHA
 
 ## Runbooks
 
-- [local-dev.md](./runbooks/local-dev.md) — como a FASE 1 deve subir (ainda não há compose real)
+- [local-dev.md](./runbooks/local-dev.md) — contrato Compose da FASE 1
+- [whatsapp-waba-brasil.md](./runbooks/whatsapp-waba-brasil.md) — CNPJ, custos, opções sem WABA
 
 ## Gate
 

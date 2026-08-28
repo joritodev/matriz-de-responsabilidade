@@ -3,7 +3,7 @@
 Documento da FASE 0. Não contém código de produção.
 
 Aplicação: matriz de responsabilidade (uso interno, single-tenant — A1).
-Papéis MVP: `ADMIN` e `OPERATOR` (A9). Sessão por cookie httpOnly. Sem OAuth/SSO no MVP (Q1: quantidade de OPERATORs no dia 1 fica em aberto; o modelo de autorização abaixo já assume os dois papéis).
+Papéis MVP: um único `ADMIN` seedado (Q1). `OPERATOR` existe no schema e nas regras AuthZ, sem UI. Sessão por cookie httpOnly. Sem OAuth/SSO.
 
 Critério permanente (PROMPT §50): a segurança existe para reduzir trabalho operacional **sem** permitir ação indevida da IA, vazamento de PII ou mutação de prazo/entrega sem humano.
 

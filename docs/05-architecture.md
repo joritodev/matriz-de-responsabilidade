@@ -81,13 +81,13 @@ Atores e sistemas externos:
 
 | Ator / sistema | Papel | Dentro do MVP? |
 |---|---|---|
-| Administrador (`ADMIN`) | Dono. Únicas ações irreversíveis/sensíveis. | Sim (A9). Primeiro usuário = admin dono. |
-| Operador (`OPERATOR`) | Cadastro e leitura operacional. | Modelo no dia 1; quantidade real depende de Q1. |
-| Responsável | Entidade de domínio; canal WhatsApp. Sem login. | Sim. |
-| Sócios (NotificationTargets) | Destinatários de prorrogação aprovada. | Configurável (A30). Seed concreto é Q4. |
-| Meta Cloud API | Único provedor WhatsApp do MVP. | Sim (ADR-003). Conta WABA é Q2. |
+| Administrador (`ADMIN`) | Dono. Únicas ações irreversíveis/sensíveis. Único login (Q1). | Sim. |
+| Operador (`OPERATOR`) | Reservado no schema. | Sem UI no MVP. |
+| Responsável | Entidade de domínio. Canal WhatsApp **quando** houver WABA. | Sim. |
+| Chefes / sócios | Grupo humano. Texto copiável no pedido e na decisão (Q4). | Sim, sem API de grupo. |
+| Meta Cloud API | Provedor WhatsApp **futuro**. | Arquitetura sim; conta **não** existe (Q2). Flag off. |
 | OpenAI | Triagem opcional. | Sim, com fallback (ADR-006). |
-| E-mail | Fora do MVP. | Preparado no `NotificationTarget` (`EMAIL`). |
+| Graphify | Grafo da spec/código para agentes. | Dev-only (`docs/13-graphify.md`). |
 
 Não há outros bounded contexts no MVP. Single-tenant: um workspace, um banco, um Compose.
 
@@ -609,17 +609,15 @@ Nenhum desses riscos muda as decisões A1–A36 nem os ADRs desta fase.
 
 ---
 
-## 18. Assumptions e perguntas (não bloqueiam esta arquitetura)
+## 18. Assumptions (Q1–Q5 respondidas)
 
-Já travadas no brief: A1–A36.
+Já travadas: A1–A38. Respostas em `docs/11-open-questions.md`.
 
-Perguntas para o integrator consolidar em `docs/11-open-questions.md` (não inventar resposta definitiva):
-
-- **Q1** — Um ADMIN ou vários OPERATORs no dia 1? Modelo de papéis existe de qualquer forma.
-- **Q2** — WABA já existe ou greenfield? Adapter oficial não muda.
-- **Q3** — Recorrência: ao concluir o período, volta a PENDING no próximo? Seguir A16 até confirmação.
-- **Q4** — Quem entra no seed de NotificationTargets?
-- **Q5** — Um “entreguei” valida a tarefa toda? Seguir A14/A20 (tarefa una) até confirmação.
+- **Q1** — Só ADMIN.
+- **Q2** — Sem WABA; Cloud API flag off; copy-ready.
+- **Q3** — Recorrência reabre período (A16).
+- **Q4** — Chefes via grupo humano + texto copiável.
+- **Q5** — Claim valida a tarefa toda (A38).
 
 ---
 
@@ -638,4 +636,5 @@ Perguntas para o integrator consolidar em `docs/11-open-questions.md` (não inve
 - `docs/10-roadmap.md` (slices e DoD)
 - `docs/12-ux-spec.md` (telas)
 - `docs/runbooks/local-dev.md` (contrato Compose)
-- `docs/assumptions.md` (A1–A36)
+- `docs/13-graphify.md` (grafo da spec)
+- `docs/runbooks/whatsapp-waba-brasil.md` (Q2 / CNPJ)

@@ -1,0 +1,26 @@
+{
+  "name": "matriz-de-responsabilidade",
+  "private": true,
+  "packageManager": "pnpm@10.33.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @matriz/web dev",
+    "dev:worker": "pnpm --filter @matriz/worker dev",
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:generate": "pnpm --filter @matriz/db generate",
+    "db:migrate": "pnpm --filter @matriz/db migrate",
+    "db:seed": "pnpm --filter @matriz/db seed",
+    "lint": "pnpm -r --if-present lint"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp", "unrs-resolver"]
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "typescript": "^5.9.3"
+  }
+}

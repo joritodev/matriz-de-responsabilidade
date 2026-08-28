@@ -5,7 +5,7 @@
 **Lei:** `/PROMPT.md`  
 **Assumptions:** A1–A36 (`docs/assumptions.md`)  
 **Inconsistências tratadas:** I1–I10 (seção 11)  
-**Perguntas em aberto:** Q1–Q5 (não respondidas; hypotheses de trabalho citadas)
+**Perguntas ao dono:** Q1–Q5 respondidas (`docs/11-open-questions.md`)
 
 Este documento define casos de uso, regras de negócio, critérios de aceite testáveis, notificações em alto nível, central de triagem, cenários reais A–G, UX comportamental e gaps de produto que **não** bloqueiam arquitetura.
 
@@ -27,13 +27,14 @@ Detalhe de Cloud API, templates Meta, janela de 24h e opt-in fica em `docs/06-wh
 
 | Ator | Sistema | Notas |
 |---|---|---|
-| Administrador (`ADMIN`) | Web + (FASE 5) WhatsApp de alerta | Decisor. |
-| Operator (`OPERATOR`) | Web | Papel no modelo (A9). Escopo de permissão = Q1 / gap G-01. |
-| Responsável | WhatsApp | Sem login. |
+| Administrador (`ADMIN`) | Web | Único login no MVP (Q1). Decisor. |
+| Operator (`OPERATOR`) | — | Existe no schema; **fora da UI** até o dono pedir. |
+| Responsável | WhatsApp (quando houver WABA) ou recorte copiado pelo admin | Sem login. |
+| Chefes / sócios | Grupo de WhatsApp **humano** | Não têm login. Recebem texto colado pelo ADMIN (Q4). |
 | Sistema / worker | Jobs, outbox, scheduler | Efeitos colaterais. |
 | IA | Classificação estruturada | Sem mutação de domínio (A15). |
 
-Enquanto Q1 não for respondida: fluxos abaixo descrevem o **Administrador**. Operator, se existir, vê o mesmo que o admin **exceto** as ações marcadas *sensíveis* (aprovar prorrogação, validar entrega, arquivar matriz, editar NotificationTargets, editar feriados globais).
+Enquanto só houver um ADMIN (Q1), todos os fluxos abaixo descrevem esse ator. Ações sensíveis não têm segundo papel no MVP.
 
 ---
 
@@ -74,7 +75,7 @@ Enquanto Q1 não for respondida: fluxos abaixo descrevem o **Administrador**. Op
 | **BR-23** | Notificações WhatsApp vão para **todos** os responsáveis ativos da tarefa. Digest é **por pessoa**, não por tarefa (A20, A25, I5). |
 | **BR-24** | Template `{{nome}}` é o primeiro nome (ou nome cadastrado) **daquele** destinatário, nunca uma lista concatenada no vocativo. |
 | **BR-25** | WhatsApp: persistir número bruto e E.164. Opt-in/status quando aplicável. Sem opt-in válido, o sistema **não envia** (FASE 3); o cadastro na FASE 1 ainda é válido. |
-| **BR-26** | Hypothesis Q5: um claim de entrega de **qualquer** responsável coloca a **tarefa** em `WAITING_FOR_VALIDATION`, não uma “parte” dele. |
+| **BR-26** | **Q5 = A:** um claim de entrega de **qualquer** responsável coloca a **tarefa** em `WAITING_FOR_VALIDATION`, não uma “parte” dele. |
 
 ### 2.4 Status (três eixos)
 
@@ -121,12 +122,13 @@ Enquanto Q1 não for respondida: fluxos abaixo descrevem o **Administrador**. Op
 | ID | Regra |
 |---|---|
 | **BR-70** | Pedido de prorrogação (WhatsApp, UI admin, ou classificação IA) **não** altera prazo vigente. |
-| **BR-71** | IA pode preencher `reason` e `requested_due_date` sugerido. Status da extensão = `REQUESTED`. Admin é alertado. |
-| **BR-72** | Admin pode **aprovar**, **ajustar data** (aprovar com data diferente) ou **rejeitar**. |
-| **BR-73** | Ao aprovar: grava prazo anterior, prazo novo, incrementa contador, atualiza vigente, recarrega automações, audit, gera comunicação estruturada aos NotificationTargets (A30). |
-| **BR-74** | Comunicação a sócios **só** na aprovação, nunca no pedido. Texto sempre deixa claro que foi decisão humana. |
-| **BR-75** | Se WhatsApp Group indisponível: envio individual aos targets e/ou mensagem pronta para copiar + notificação in-app (A24). O produto não quebra. |
-| **BR-76** | Rejeitar: prazo vigente inalterado; responsável pode ser notificado (ação humana “Responder”, não automática por padrão). |
+| **BR-71** | IA pode preencher `reason` e `requested_due_date` sugerido. Status da extensão = `REQUESTED`. Admin é alertado **na inbox**. |
+| **BR-72** | Admin pode **aprovar**, **ajustar data** (aprovar com data diferente) ou **rejeitar** — só depois da conversa humana com os chefes. |
+| **BR-73** | Ao aprovar: grava prazo anterior, prazo novo, incrementa contador, atualiza vigente, recarrega automações, audit. |
+| **BR-74** | **No `REQUESTED` (Q4):** o sistema gera texto copiável para o **grupo dos chefes**, perguntando se a prorrogação faz sentido. O ADMIN cola no grupo. O sistema **não** envia ao grupo via API. |
+| **BR-75** | **No `APPROVED` / `REJECTED`:** o sistema gera texto copiável para o **responsável** que pediu. Aprovado: novo prazo. Rejeitado: prazo intacto + que o admin vai buscar reduzir o atraso. Envio automático só se `WHATSAPP_ENABLED` e opt-in; senão, copiar. |
+| **BR-76** | Rejeitar: prazo vigente inalterado; status `REJECTED`; audit. Não há bot negociando no grupo. |
+| **BR-77** | O produto não quebra sem WABA e sem lista de telefones de sócios (A24, A30, Q2). |
 
 ### 2.8 Automação, IA, falhas
 
@@ -432,31 +434,56 @@ Origens: classificação `EXTENSION_REQUEST`; admin na UI (“registrar pedido�
 
 ---
 
-### UC-22 — Comunicar prorrogação aos sócios
+### UC-22 — Falar com os chefes e devolver a decisão ao responsável
 
-**Fase:** 5  
-**Regras:** BR-74, BR-75, A24, A30
+**Fase:** 1 (copy-ready) / 5 (se WABA ligar envio ao responsável)  
+**Regras:** BR-70–BR-77, A24, A30, Q4
 
-Gerar texto estruturado (exemplo normativo do PROMPT §13):
+O grupo dos chefes **não** é um destino da Cloud API. É um grupo que o ADMIN já usa. O app só escreve o texto.
+
+**No pedido (`REQUESTED`) — colar no grupo:**
 
 ```
-Prorrogação registrada — OD Academy
+Pedido de prorrogação — OD Academy
 
 Demanda #3
 Responsável: Fenilli
 Tarefa: Elaborar versão 1
-Prazo anterior: 25/10/2026
-Novo prazo: 30/10/2026
-Solicitado por: Fenilli
+Prazo atual: 25/10/2026
+Nova previsão pedida: 30/10/2026
 Motivo: aguardando consolidação dos materiais
-Prorrogação nº 1.
+Prorrogação seria a nº 1.
+
+Nenhuma data foi alterada ainda.
+Posso aprovar, ajustar a data, ou recusar e buscar como reduzir o atraso?
 ```
 
-Com múltiplos responsáveis, o campo Responsável lista todos; “Solicitado por” é quem pediu (responsável identificável ou Admin).
+**Se aprovado — colar / enviar ao responsável:**
 
-- **AC-22.1** A comunicação **não** é gerada no `REQUESTED`, só no `APPROVED`.
-- **AC-22.2** Se não houver grupo: in-app + texto copiável + tentativa individual aos NotificationTargets configurados.
-- **AC-22.3** Seed de quem são os sócios = Q4; produto aceita lista vazia (só in-app + copiar).
+```
+Prorrogação aprovada — OD Academy
+
+Demanda #3
+Tarefa: Elaborar versão 1
+Prazo anterior: 25/10/2026
+Novo prazo: 30/10/2026
+```
+
+**Se rejeitado — colar / enviar ao responsável:**
+
+```
+Prorrogação não aprovada — OD Academy
+
+Demanda #3
+Tarefa: Elaborar versão 1
+O prazo segue 25/10/2026.
+Vamos conversar para evitar ou pelo menos reduzir o atraso.
+```
+
+- **AC-22.1** No `REQUESTED`, o botão principal da inbox é **Copiar texto para o grupo dos chefes**. Prazo vigente **não** muda.
+- **AC-22.2** Aprovar/rejeitar só depois, no app, por ação humana. Aí sim o prazo muda (se aprovado) e aparece **Copiar texto para o responsável**.
+- **AC-22.3** Sem WABA, sem telefones de sócios, o fluxo permanece só com copiar. Não fingir envio a grupo.
+- **AC-22.4** Texto do pedido deixa explícito: “Nenhuma data foi alterada ainda.”
 
 ---
 
@@ -870,9 +897,9 @@ Itens conscientes. Não são TBD de modelo. Podem ir para `docs/11-open-question
 
 | ID | Gap | Por que não bloqueia |
 |---|---|---|
-| **G-01** | Matriz fina de permissão do `OPERATOR` (Q1) | Modelo já tem papéis; default ADMIN-only na UI. |
-| **G-02** | Seed de sócios / canais (Q4) | NotificationTargets é lista vazia-válida + copiar texto. |
-| **G-03** | WABA existente vs greenfield (Q2) | Provider abstrato; FASE 1 nem envia. |
+| **G-01** | UI de `OPERATOR` | Q1: só ADMIN. Schema fica. |
+| **G-02** | Telefones dos chefes | Q4: não seedar; grupo é copy-ready. |
+| **G-03** | WABA / CNPJ | Q2: não há conta. FASE 1–2 copy-ready. Runbook WABA. |
 | **G-04** | Confirmar reset de status na recorrência (Q3) | A16 é hypothesis suficiente para modelar `deadline_occurrences`. |
 | **G-05** | Entrega parcial com N responsáveis (Q5) | Tarefa una; um claim valida o todo. Se no futuro for split, vira subtarefa — não precisa agora. |
 | **G-06** | Trigger por data-marco sem `COMPLETED` (I6) | Campo `trigger_type` no modelo; UI MVP só conclusão. |

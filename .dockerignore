@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+graphify-out
+*.md
+!README.md
+.env
+.env.*
+!.env.example
