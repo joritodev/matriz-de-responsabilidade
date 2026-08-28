@@ -35,8 +35,10 @@ test.describe("MVP — fluxos principais (sem WhatsApp automático)", () => {
     await login(page);
     await page.getByRole("link", { name: "Caixa de Entrada" }).click();
     await expect(page.getByRole("heading", { name: "Caixa de Entrada" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Prorrogações" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Validar entrega" })).toBeVisible();
+    await page.getByRole("main").getByRole("link", { name: "Prorrogações" }).click();
+    await expect(page).toHaveURL(/filter=EXTENSION_REQUEST/);
+    await page.getByRole("main").getByRole("link", { name: "Validar entrega" }).click();
+    await expect(page).toHaveURL(/filter=DELIVERY_CLAIM/);
   });
 
   test("validar datas e lembretes assistidos", async ({ page }) => {
@@ -51,7 +53,7 @@ test.describe("MVP — fluxos principais (sem WhatsApp automático)", () => {
 
   test("histórico de prorrogações e configurações", async ({ page }) => {
     await login(page);
-    await page.getByRole("link", { name: "Prorrogações" }).click();
+    await page.locator("aside nav").getByRole("link", { name: "Prorrogações" }).click();
     await expect(page.getByRole("heading", { name: "Prorrogações", exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: "Configurações" }).click();
