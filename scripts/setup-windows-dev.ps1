@@ -1,8 +1,6 @@
-# Setup local no Windows: clona o repo, sobe Postgres e inicia pnpm dev.
+# Setup local no Windows: clona o repo, sobe Postgres e inicia npm run dev.
 # Uso (PowerShell):
 #   Set-ExecutionPolicy -Scope Process Bypass
-#   iwr -useb https://raw.githubusercontent.com/joritodev/matriz-de-responsabilidade/cursor/fase-1-core-912f/scripts/setup-windows-dev.ps1 | iex
-# Ou, após clonar:
 #   .\scripts\setup-windows-dev.ps1
 
 $ErrorActionPreference = "Stop"
@@ -10,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = "C:\Users\Jorito\Desktop\Jorito\Repos"
 $RepoName = "matriz-de-responsabilidade"
 $Target = Join-Path $RepoRoot $RepoName
-$Branch = "cursor/fase-1-core-912f"
+$Branch = "main"
 $RepoUrl = "https://github.com/joritodev/matriz-de-responsabilidade.git"
 
 function Require-Command($name) {
@@ -21,7 +19,7 @@ function Require-Command($name) {
 
 Require-Command git
 Require-Command node
-Require-Command pnpm
+Require-Command npm
 Require-Command docker
 
 Write-Host ">> Pasta destino: $Target"
@@ -51,18 +49,18 @@ docker compose up postgres -d
 Write-Host ">> Aguardando Postgres..."
 $ready = $false
 for ($i = 0; $i -lt 30; $i++) {
-    $result = docker compose exec -T postgres pg_isready -U matriz -d matriz 2>$null
+    $null = docker compose exec -T postgres pg_isready -U matriz -d matriz 2>$null
     if ($LASTEXITCODE -eq 0) { $ready = $true; break }
     Start-Sleep -Seconds 2
 }
 if (-not $ready) { throw "Postgres não ficou pronto a tempo." }
 
 Write-Host ">> Instalando dependências..."
-pnpm install
+npm install
 
 Write-Host ">> Migrando e seed..."
-pnpm db:migrate
-pnpm db:seed
+npm run db:migrate
+npm run db:seed
 
 Write-Host ""
 Write-Host "========================================"
@@ -71,4 +69,4 @@ Write-Host " Login: admin@local.test / change-me-local-only"
 Write-Host "========================================"
 Write-Host ""
 
-pnpm dev
+npm run dev

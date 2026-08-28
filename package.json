@@ -1,23 +1,25 @@
 {
   "name": "matriz-de-responsabilidade",
   "private": true,
-  "packageManager": "pnpm@10.33.3",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "npm": ">=10"
   },
   "scripts": {
-    "dev": "pnpm --filter @matriz/web dev",
-    "dev:worker": "pnpm --filter @matriz/worker dev",
-    "build": "pnpm -r --if-present build",
-    "test": "pnpm -r --if-present test",
-    "typecheck": "pnpm -r --if-present typecheck",
-    "db:generate": "pnpm --filter @matriz/db generate",
-    "db:migrate": "pnpm --filter @matriz/db migrate",
-    "db:seed": "pnpm --filter @matriz/db seed",
-    "lint": "pnpm -r --if-present lint"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp", "unrs-resolver"]
+    "dev": "npm run dev -w @matriz/web",
+    "dev:worker": "npm run dev -w @matriz/worker",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:generate": "npm run generate -w @matriz/db",
+    "db:migrate": "npm run migrate -w @matriz/db",
+    "db:seed": "npm run seed -w @matriz/db",
+    "db:seed-demo": "npm run seed:demo -w @matriz/db",
+    "lint": "npm run lint --workspaces --if-present"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
