@@ -6,7 +6,17 @@ Aplicação interna para centralizar matrizes de responsabilidade hoje mantidas 
 
 ## Estado atual
 
-**FASE 1 — Core (sem WhatsApp, sem IA).** Spec da FASE 0 em [`docs/`](./docs/README.md).
+**MVP funcional** — Fases 1–2 e 5 (prorrogações). WhatsApp automático e IA **adiados**; envio assistido via `wa.me`.
+
+| Fluxo | Rota |
+|-------|------|
+| Dashboard e fila de atenção | `/` |
+| Caixa de entrada (prorrogações, validações, prazos) | `/inbox` |
+| Validar datas com responsáveis (copy-ready) | `/validate-dates` |
+| Lembretes diários assistidos | `/reminders` |
+| Matrizes e tarefas | `/matrices` |
+| Visão geral com filtros | `/overview` |
+| Histórico de prorrogações | `/extensions` |
 
 ```bash
 cp .env.example .env
@@ -15,24 +25,24 @@ docker compose up --build
 # login: SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD do .env
 ```
 
-Atalho de desenvolvimento (Postgres precisa estar no ar, Compose ou local):
+Desenvolvimento local (Postgres no ar — `docker compose up postgres -d` ou instalação local):
 
 ```bash
 npm install
 npm run db:migrate
 npm run db:seed
-npm run dev          # web :3000
-npm run dev:worker   # health :3001
+npm run db:seed-pdf    # matrizes do PDF (opcional)
+npm run dev:all        # web :3000 + worker deadline-tick
 npm test
 ```
 
-Dados de demonstração (opcional): `npm run db:seed-demo`
+Rotina diária: **Validar datas** (se prazos chegando) → **Lembretes de hoje** → marcar como enviado. Inbox para prorrogações e confirmação de entrega.
 
-Flags: `WHATSAPP_ENABLED=false`, `AI_ENABLED=false`. Transportes não oficiais de WhatsApp estão rejeitados (ADR-007).
+Flags: `WHATSAPP_ENABLED=false`, `AI_ENABLED=false`. Transportes não oficiais de WhatsApp estão rejeitados (ADR-007). WABA: `docs/runbooks/waba-mei-passo-a-passo.md` (quando quiser ligar automação).
 
 ## Agentes
 
 Ver [`AGENTS.md`](./AGENTS.md).
 
 - Sub-agents: modo auto do Cursor (`model: inherit`).
-- **Graphify** é skill de primeira classe: [`docs/13-graphify.md`](./docs/13-graphify.md), grafo em `graphify-out/`. Origem: [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify).
+- **Graphify**: [`docs/13-graphify.md`](./docs/13-graphify.md), grafo em `graphify-out/`.

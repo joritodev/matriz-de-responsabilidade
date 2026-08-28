@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { formatDeadlineExplanation } from "@matriz/core";
 import { getCurrentUser } from "@/lib/auth";
 import { getTaskDetail, listResponsibles, loadTaskRows } from "@/lib/queries";
 import { baseStatusLabel, deadlineStatusLabel, extensionStatusLabel } from "@/lib/labels";
 import { formatDatePtBr } from "@/lib/dates";
+import { ExtensionPanel } from "@/components/extension-panel";
+import { EditTaskForm } from "@/components/edit-task-form";
 import { TaskActions } from "@/components/task-actions";
 
 export default async function TaskDetailPage({
@@ -19,7 +22,14 @@ export default async function TaskDetailPage({
     loadTaskRows(matrixId),
   ]);
   if (!detail || !user) notFound();
-  const { task, history, audits, notes, rule } = detail;
+  const { task, history, audits, notes, rule, extensions, chefsCopyText, responsibleApprovedText, responsibleRejectedText } =
+    detail;
+  const explanationText = rule
+    ? formatDeadlineExplanation(
+        rule.deadlineType,
+        rule.explanation as Record<string, unknown> | null,
+      )
+    : null;
 
   return (
     <div className="max-w-4xl">
@@ -65,11 +75,42 @@ export default async function TaskDetailPage({
           : "nenhum cadastrado (ordem não cria vínculo)"}
       </p>
       {rule ? (
-        <p className="text-sm text-stone-600">
-          Regra: {rule.deadlineType}
-          {rule.explanation ? ` · ${JSON.stringify(rule.explanation)}` : ""}
-        </p>
+        <section className="mt-4 rounded-sm border border-[#d6d3cd] bg-[#fbfaf6] p-4 text-sm">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500">Por que esta data?</h2>
+          <p className="mt-2 text-stone-700">
+            {explanationText ?? "Sem explicação materializada para esta regra."}
+          </p>
+          <p className="mt-2 text-xs text-stone-500">Tipo: {rule.deadlineType}</p>
+        </section>
       ) : null}
+
+      <EditTaskForm
+        taskId={task.id}
+        matrixId={matrixId}
+        title={task.title}
+        description={task.description}
+        deadlineType={rule?.deadlineType ?? task.deadlineType}
+        currentDueDate={task.currentDueDate}
+      />
+
+      <ExtensionPanel
+        taskId={task.id}
+        matrixId={matrixId}
+        extensionStatus={task.extensionStatus}
+        extensions={extensions.map((e) => ({
+          id: e.id,
+          status: e.status,
+          reason: e.reason,
+          previousDueDate: e.previousDueDate,
+          requestedDueDate: e.requestedDueDate,
+          approvedDueDate: e.approvedDueDate,
+          requestedAt: e.requestedAt,
+        }))}
+        chefsCopyText={chefsCopyText}
+        responsibleApprovedText={responsibleApprovedText}
+        responsibleRejectedText={responsibleRejectedText}
+        canRequest={task.baseStatus !== "COMPLETED" && task.baseStatus !== "CANCELLED"}
+      />
 
       <TaskActions
         task={task}

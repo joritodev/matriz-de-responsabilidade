@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { loadEnv } from "@matriz/config";
 
-const env = loadEnv({ ...process.env, PROCESS_ROLE: process.env.PROCESS_ROLE ?? "web" });
+const env = loadEnv();
 
 async function main() {
   const sql = postgres(env.databaseUrl, { max: 1 });
@@ -17,14 +17,19 @@ async function main() {
       )
     `;
     const folder = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "drizzle");
-    const filename = "0000_init.sql";
-    const applied = await sql<{ filename: string }[]>`
-      SELECT filename FROM schema_migrations WHERE filename = ${filename}
-    `;
-    if (applied.length === 0) {
+    const { readdir } = await import("node:fs/promises");
+    const files = (await readdir(folder))
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
+    for (const filename of files) {
+      const applied = await sql<{ filename: string }[]>`
+        SELECT filename FROM schema_migrations WHERE filename = ${filename}
+      `;
+      if (applied.length > 0) continue;
       const contents = await readFile(path.join(folder, filename), "utf8");
       await sql.unsafe(contents);
       await sql`INSERT INTO schema_migrations (filename) VALUES (${filename})`;
+      console.log(`Applied migration ${filename}`);
     }
   } finally {
     await sql`SELECT pg_advisory_unlock(872364)`;

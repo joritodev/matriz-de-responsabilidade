@@ -3,10 +3,11 @@ import { hash } from "bcryptjs";
 import { v7 as uuidv7 } from "uuid";
 import { loadEnv } from "@matriz/config";
 import { createDb } from "./client";
-import { businessCalendars, systemSettings, users } from "./schema/index";
+import { brNationalHolidaySeed } from "./data/br-national-holidays";
+import { businessCalendars, holidays, systemSettings, users } from "./schema/index";
 
 async function main() {
-  const env = loadEnv({ ...process.env, PROCESS_ROLE: process.env.PROCESS_ROLE ?? "web" });
+  const env = loadEnv();
   const { db, client } = createDb(env.databaseUrl);
 
   const calendarId = uuidv7();
@@ -27,6 +28,22 @@ async function main() {
       weekendDays: [0, 6],
       isDefault: true,
     });
+  }
+
+  const holidayRows = brNationalHolidaySeed();
+  for (const row of holidayRows) {
+    await db
+      .insert(holidays)
+      .values({
+        id: uuidv7(),
+        calendarId: resolvedCalendarId,
+        observedOn: row.observedOn,
+        name: row.name,
+        kind: "NATIONAL",
+        source: "BR-NATIONAL-SEED",
+        year: row.year,
+      })
+      .onConflictDoNothing({ target: [holidays.calendarId, holidays.observedOn] });
   }
 
   const adminEmail = env.seedAdminEmail ?? "admin@local.test";

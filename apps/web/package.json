@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 3000",
+    "dev": "node --env-file=../../.env ../../node_modules/next/dist/bin/next dev --turbopack --port 3000",
     "build": "next build",
     "start": "next start --port 3000",
     "lint": "eslint"
@@ -13,6 +13,7 @@
     "@matriz/core": "*",
     "@matriz/db": "*",
     "@matriz/shared": "*",
+    "@matriz/whatsapp": "*",
     "@tanstack/react-table": "^8.21.3",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.40.1",

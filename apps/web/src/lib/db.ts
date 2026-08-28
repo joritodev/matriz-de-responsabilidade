@@ -6,10 +6,7 @@ const globalForDb = globalThis as unknown as {
 };
 
 export function getEnv() {
-  return loadEnv({
-    ...process.env,
-    PROCESS_ROLE: process.env.PROCESS_ROLE ?? "web",
-  });
+  return loadEnv();
 }
 
 export function getDb() {

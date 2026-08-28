@@ -2,12 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { logoutAction } from "@/lib/actions";
+import { countOpenInboxItems } from "@/lib/queries";
 
 const NAV = [
   { href: "/", label: "Dashboard" },
-  { href: "/inbox", label: "Caixa de Entrada" },
+  { href: "/inbox", label: "Caixa de Entrada", badge: "inbox" as const },
+  { href: "/validate-dates", label: "Validar datas" },
+  { href: "/reminders", label: "Lembretes de hoje" },
   { href: "/matrices", label: "Matrizes" },
   { href: "/overview", label: "Visão Geral" },
+  { href: "/extensions", label: "Prorrogações" },
   { href: "/responsibles", label: "Responsáveis" },
   { href: "/settings", label: "Configurações" },
 ];
@@ -15,6 +19,7 @@ const NAV = [
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const inboxOpen = await countOpenInboxItems();
 
   return (
     <div className="flex min-h-screen">
@@ -28,9 +33,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-sm px-3 py-2 text-stone-200 hover:bg-white/10"
+              className="flex items-center justify-between rounded-sm px-3 py-2 text-stone-200 hover:bg-white/10"
             >
-              {item.label}
+              <span>{item.label}</span>
+              {item.badge === "inbox" && inboxOpen > 0 ? (
+                <span className="rounded-sm bg-amber-600 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                  {inboxOpen}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>
@@ -44,9 +54,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
       <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between border-b border-[#d6d3cd] bg-[#fbfaf6] px-6 py-3">
-          <p className="text-sm text-stone-600">Datas em America/Sao_Paulo · WhatsApp e IA desligados</p>
+          <p className="text-sm text-stone-600">Datas em America/Sao_Paulo · Worker deadline-tick (15 min)</p>
           <span className="rounded-sm border border-[#d6d3cd] px-2 py-0.5 text-[11px] uppercase tracking-wide text-stone-500">
-            FASE 1
+            MVP funcional
           </span>
         </header>
         <main className="px-6 py-5">{children}</main>
