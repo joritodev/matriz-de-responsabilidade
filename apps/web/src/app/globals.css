@@ -1,26 +1,140 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+
+  /* Neutros */
+  --color-canvas: #EEF0F3;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F5F6F8;
+  --color-line: #E3E6EB;
+  --color-ink: #16181D;
+  --color-ink-2: #4B5160;
+  --color-ink-3: #5E6573;
+  --color-nav-hover: #E2E5EA;
+  --color-dash: #C3C8D0;
+  --color-track: #C9CED6;
+  --color-avatar: #D9DDE4;
+  --color-chat: #E9EDE7;
+
+  /* Situação do prazo */
+  --color-late-bg: #FFE2E3;   --color-late-fg: #A1141C;
+  --color-today-bg: #16181D;  --color-today-fg: #FFFFFF;
+  --color-soon-bg: #FFF0B3;   --color-soon-fg: #614A00;
+  --color-ok-bg: #F0F1F4;     --color-ok-fg: #16181D;
+  --color-done-bg: #DDF3E7;   --color-done-fg: #11593A;
+
+  /* Pastas */
+  --color-lilac-bg: #E6E0FF; --color-lilac-ink: #3D2C99; --color-lilac-solid: #8676F0; --color-lilac-wash: #F4F1FF;
+  --color-mint-bg:  #CFF0E0; --color-mint-ink:  #11593A; --color-mint-solid:  #2E9E68; --color-mint-wash:  #EEF9F3;
+  --color-peach-bg: #FFE2CF; --color-peach-ink: #8A3A0B; --color-peach-solid: #EE8640; --color-peach-wash: #FFF4EC;
+  --color-lemon-bg: #FFF0B3; --color-lemon-ink: #614A00; --color-lemon-solid: #E2B408; --color-lemon-wash: #FFF9DE;
+  --color-sky-bg:   #D7EAFE; --color-sky-ink:   #0E4A7E; --color-sky-solid:   #3D8EDB; --color-sky-wash:   #EEF6FF;
+  --color-rose-bg:  #FFDCE8; --color-rose-ink:  #891B47; --color-rose-solid:  #E2588C; --color-rose-wash:  #FFF1F6;
+  --color-sand-bg:  #F1E6D2; --color-sand-ink:  #5A4220; --color-sand-solid:  #C29A5B; --color-sand-wash:  #F8F3EA;
+  --color-sage-bg:  #DCE9D5; --color-sage-ink:  #2F5126; --color-sage-solid:  #79A062; --color-sage-wash:  #F0F6EC;
+
+  /* Raios */
+  --radius-card: 24px;
+  --radius-inner: 20px;
+  --radius-row: 18px;
+  --radius-field: 14px;
+  --radius-folder: 22px;
+  --radius-tab: 14px;
+
+  --ease-out-soft: cubic-bezier(.2, .8, .2, 1);
+  --shadow-fab: 0 8px 20px rgba(22, 24, 29, .25);
 }
 
+/* Cor da pasta atual: inline para resolver as variáveis locais (--f-*) em cada elemento */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-f-bg: var(--f-bg, #E6E0FF);
+  --color-f-ink: var(--f-ink, #3D2C99);
+  --color-f-solid: var(--f-solid, #8676F0);
+  --color-f-wash: var(--f-wash, #F4F1FF);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-canvas);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--f-bg, var(--color-lilac-bg));
+  color: var(--f-ink, var(--color-lilac-ink));
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+button:not(:disabled), [role="button"], summary {
+  cursor: pointer;
+}
+
+.pressable {
+  transition: transform 150ms var(--ease-out-soft), background-color 150ms var(--ease-out-soft);
+}
+.pressable:active:not(:disabled) {
+  transform: scale(.98);
+}
+
+/* Campo padrão do DESIGN.md */
+.field {
+  height: 44px;
+  width: 100%;
+  border-radius: var(--radius-field);
+  border: 1.5px solid transparent;
+  background: var(--color-surface);
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--color-ink);
+  transition: border-color 150ms var(--ease-out-soft);
+}
+.field::placeholder { color: var(--color-ink-3); }
+.field:focus { outline: none; border-color: var(--color-ink); }
+.field[aria-invalid="true"] { border-color: var(--color-late-fg); }
+select.field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%2316181D' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.skeleton {
+  background: var(--color-surface-muted);
+  border-radius: 12px;
+}
+
+.folder-lift {
+  transition: transform 180ms var(--ease-out-soft);
+}
+.folder-lift:hover {
+  transform: translateY(-3px);
+}
+
+.expand-enter {
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: expand 180ms var(--ease-out-soft);
+}
+@keyframes expand {
+  from { grid-template-rows: 0fr; opacity: 0; }
+  to { grid-template-rows: 1fr; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
 }
