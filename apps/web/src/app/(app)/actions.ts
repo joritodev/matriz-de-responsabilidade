@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import type { ActionResult, ChannelPreference, FolderColor, HistoryEvent, MatrixTasks, SearchResult } from "@/lib/api-types";
+import type { ActionResult, Assignee, ChannelPreference, FolderColor, FolderSummary, HistoryEvent, MatrixTasks, SearchResult } from "@/lib/api-types";
 
 async function run<T>(fn: () => Promise<T>, revalidate = true): Promise<ActionResult<T>> {
   try {
@@ -71,6 +71,13 @@ export async function prerequisiteOptionsAction(slug: string) {
 
 export async function searchAction(q: string) {
   return run(() => api<SearchResult>(`/search?q=${encodeURIComponent(q)}`), false);
+}
+
+export async function newTaskPanelDataAction() {
+  return run(async () => {
+    const [folders, assignees] = await Promise.all([api<FolderSummary[]>("/matrices"), api<Assignee[]>("/assignees")]);
+    return { folders, assignees };
+  }, false);
 }
 
 export interface AssigneeInput {
