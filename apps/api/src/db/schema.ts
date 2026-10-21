@@ -197,6 +197,7 @@ export const reminderBatchItems = pgTable(
       .on(t.taskId, t.kind, t.dueDateSnapshot, t.channel)
       .where(sql`${t.isActive}`),
     index('reminder_items_batch').on(t.batchId),
+    index('reminder_items_task').on(t.taskId),
   ],
 ).enableRLS();
 
