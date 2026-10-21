@@ -2,7 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { API_URL, LOCAL_PASSWORD, LOCAL_SESSION_COOKIE, localAuthEnabled, supabaseEnabled } from "@/lib/auth-config";
+import { apiOrigin } from "@/lib/api-origin";
+import { LOCAL_PASSWORD, LOCAL_SESSION_COOKIE, localAuthEnabled, supabaseEnabled } from "@/lib/auth-config";
 import { supabaseServer } from "@/lib/session";
 
 export interface LoginState {
@@ -12,7 +13,7 @@ export interface LoginState {
 
 async function memberStatus(token: string): Promise<"ok" | "not_member" | "invalid" | "unreachable"> {
   try {
-    const res = await fetch(`${API_URL}/v1/me`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    const res = await fetch(`${apiOrigin()}/v1/me`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
     if (res.ok) return "ok";
     if (res.status === 403) return "not_member";
     return "invalid";

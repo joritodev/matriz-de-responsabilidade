@@ -7,5 +7,3 @@ export const localAuthEnabled = !supabaseEnabled && process.env.NODE_ENV !== "pr
 export const LOCAL_SESSION_COOKIE = "prazo_local_session";
 export const LOCAL_PASSWORD = process.env.LOCAL_LOGIN_PASSWORD ?? "prazo-local";
 export const LOCAL_EMAIL_HINT = process.env.LOCAL_LOGIN_EMAIL ?? "supervisor@prazo.local";
-
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4318").replace(/\/$/, "");

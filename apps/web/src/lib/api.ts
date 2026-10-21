@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import type { ApiErrorBody } from "./api-types";
-import { API_URL } from "./auth-config";
+import { apiOrigin } from "./api-origin";
 import { getAccessToken } from "./session";
 
 export class ApiError extends Error {
@@ -20,7 +20,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   if (!token && init.redirectOnAuth !== false) redirect("/login");
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/v1${path}`, {
+    res = await fetch(`${apiOrigin()}/v1${path}`, {
       method: init.method ?? "GET",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -59,10 +59,11 @@ Os testes de integração sobem a API inteira com um banco PGlite em memória: c
    ```sql
    insert into public.members (email, role) values ('seu-email@exemplo.com', 'admin');
    ```
-2. **Vercel, API**: novo projeto com Root Directory `apps/api` (NestJS é detectado sozinho). Variáveis: `DATABASE_URL` (pooler de **transação**, porta 6543), `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `MAKE_API_KEY` (gere com `openssl rand -hex 32`), `WEB_ORIGIN` (URL do site), `APP_TIME_ZONE=America/Fortaleza`.
-3. **Vercel, site**: segundo projeto do mesmo repositório com Root Directory `apps/web`. Variáveis: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` (URL da API).
-4. **Make**: cenário "Cobrança diária de prazos" (ver `PROMPT.md`, seção 9, e `reference/screens/07-cenario-make.png`): agenda de segunda a sexta às 08:00, `POST /v1/reminders/dispatch` com `x-api-key`, Iterator em `batches`, Router por canal, envio pelo provedor de WhatsApp ou Gmail/Microsoft 365, e `POST /v1/reminders/batches/{id}/result` com `sent` ou, na rota de erro, `failed` + Ignore.
-5. **Conferência**: entre no site, crie uma pasta, um responsável com seu WhatsApp e uma demanda vencendo daqui a 2 dias; abra a Prévia de amanhã; rode o cenário; veja a mensagem chegar e o histórico atualizar; rode de novo e confirme que nada repete.
+2. **Vercel**: um projeto só, na raiz do repositório. O `vercel.json` sobe dois serviços no mesmo domínio: `web` (`apps/web`, Next.js) e `api` (`apps/api`, NestJS). Pedidos em `/v1/*` vão para a API; o resto vai para o site. O site chama a API pela variável `API_URL`, injetada pelo binding. Não defina `API_URL` no painel.
+   Variáveis da API: `DATABASE_URL` (pooler de **transação**, porta 6543), `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `MAKE_API_KEY` (gere com `openssl rand -hex 32`), `WEB_ORIGIN` (a URL do projeto), `APP_TIME_ZONE=America/Fortaleza`.
+   Variáveis do site: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+3. **Make**: cenário "Cobrança diária de prazos" (ver `PROMPT.md`, seção 9, e `reference/screens/07-cenario-make.png`): agenda de segunda a sexta às 08:00, `POST {domínio}/v1/reminders/dispatch` com `x-api-key`, Iterator em `batches`, Router por canal, envio pelo provedor de WhatsApp ou Gmail/Microsoft 365, e `POST {domínio}/v1/reminders/batches/{id}/result` com `sent` ou, na rota de erro, `failed` + Ignore.
+4. **Conferência**: entre no site, crie uma pasta, um responsável com seu WhatsApp e uma demanda vencendo daqui a 2 dias; abra a Prévia de amanhã; rode o cenário; veja a mensagem chegar e o histórico atualizar; rode de novo e confirme que nada repete.
 
 Em produção a API se recusa a subir sem `DATABASE_URL`, e o login local fica desligado.
 
@@ -73,7 +74,7 @@ Em produção a API se recusa a subir sem `DATABASE_URL`, e o login local fica d
 | API | `DATABASE_URL` | Banco do Supabase (pooler de transação) |
 | API | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Validar o login |
 | API e Make | `MAKE_API_KEY` | Proteger as rotas que o Make chama |
-| Site | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` | Login e endereço da API |
+| Site | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Login. O endereço da API vem do binding `API_URL` |
 | Make | conta do provedor de WhatsApp, Gmail ou Microsoft 365 | Enviar as mensagens (ficam só no Make) |
 
 ## Ainda não feito
