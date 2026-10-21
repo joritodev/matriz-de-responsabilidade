@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, desc, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { conflict, notFound } from '../common/errors';
 import { loadCalendar, loadSnapshot, reminderInputs, type Snapshot } from '../common/snapshot';
@@ -223,7 +223,7 @@ export class RemindersService {
         .select()
         .from(reminderBatches)
         .where(and(...conds))
-        .orderBy(desc(reminderBatches.sentOn), desc(reminderBatches.createdAt)),
+        .orderBy(desc(reminderBatches.sentOn), asc(reminderBatches.createdAt), asc(reminderBatches.id)),
     ]);
     const items = batches.length
       ? await this.db
