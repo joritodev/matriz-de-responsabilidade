@@ -1,13 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
 import { Clock } from '../common/clock';
-import { loadSnapshot } from '../common/snapshot';
+import { itemsDueOnOrBefore, loadCalendar, loadSnapshot } from '../common/snapshot';
 import { folderSummary, reminderStates, taskDueStatus, taskEarlyDate } from '../common/views';
 import { DB, type Db } from '../db/client';
-import { reminderBatches } from '../db/schema';
 import { RemindersService } from '../reminders/reminders.service';
 import { addDays, daysBetween, EARLY_WINDOW_DAYS } from '../reminders/rules/reminder-rules';
-import { businessDaysFrom, initials, previousBusinessDay } from '../reminders/rules/schedule';
+import { businessDaysFrom, initials, nextBusinessDay, previousBusinessDay } from '../reminders/rules/schedule';
 
 @Injectable()
 export class OverviewService {
@@ -19,15 +17,14 @@ export class OverviewService {
 
   async overview() {
     const today = this.clock.today();
-    const snap = await loadSnapshot(this.db);
+    const calendar = await loadCalendar(this.db);
+    const snap = await loadSnapshot(this.db, {
+      items: { dueOnOrBefore: itemsDueOnOrBefore(nextBusinessDay(today, calendar)) },
+    });
     const visibleIds = new Set(snap.matrices.map((m) => m.id));
-    const open = snap.tasks.filter((t) => t.status === 'pending' && visibleIds.has(t.matrixId));
+    const open = snap.tasks.filter((t) => visibleIds.has(t.matrixId));
 
-    const todayRows = await this.db
-      .select({ id: reminderBatches.id })
-      .from(reminderBatches)
-      .where(eq(reminderBatches.sentOn, today));
-    const todayBatches = (await this.reminders.listBatches({ from: today, to: today })).days[0]?.batches ?? [];
+    const todayBatches = (await this.reminders.listBatches({ from: today, to: today }, snap)).days[0]?.batches ?? [];
 
     const greeting = {
       dueToday: open.filter((t) => t.dueDate === today).length,
@@ -36,7 +33,7 @@ export class OverviewService {
         return d >= 1 && d <= EARLY_WINDOW_DAYS;
       }).length,
       overdue: open.filter((t) => t.dueDate < today).length,
-      remindersSentToday: todayRows.length > 0,
+      remindersSentToday: todayBatches.length > 0,
     };
 
     const start = previousBusinessDay(today, snap.calendar);
