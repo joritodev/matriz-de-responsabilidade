@@ -37,7 +37,7 @@ const pendingOf = (s: Snapshot, matrixId: string) => s.tasks.filter((t) => t.mat
 
 export function folderSummary(s: Snapshot, m: Matrix, today: IsoDate): FolderSummary {
   const open = pendingOf(s, m.id);
-  const all = s.tasks.filter((t) => t.matrixId === m.id && t.status !== 'canceled');
+  const counts = s.counts.get(m.id) ?? { open: open.length, done: 0, canceled: 0 };
   const overdue = open.filter((t) => t.dueDate < today).length;
   const dueToday = open.filter((t) => t.dueDate === today).length;
   const soon = open.filter((t) => {
@@ -72,8 +72,8 @@ export function folderSummary(s: Snapshot, m: Matrix, today: IsoDate): FolderSum
     position: m.position,
     isArchived: m.isArchived,
     openCount: open.length,
-    doneCount: all.filter((t) => t.status === 'done').length,
-    totalCount: all.length,
+    doneCount: counts.done,
+    totalCount: open.length + counts.done,
     nextDueDate: upcoming[0] ?? null,
     alert,
     assigneeInitials,
@@ -129,5 +129,6 @@ export function reminderStates(s: Snapshot, t: Task, today: IsoDate): { early: R
   };
 }
 
-export const taskDueStatus = (t: Task, today: IsoDate): DueStatus => dueStatus({ dueDate: t.dueDate, status: t.status }, today);
+export const taskDueStatus = (t: { dueDate: string; status: Task['status'] }, today: IsoDate): DueStatus =>
+  dueStatus({ dueDate: t.dueDate, status: t.status }, today);
 export const taskEarlyDate = (s: Snapshot, t: Task) => earlyReminderDate(t.dueDate, s.calendar);

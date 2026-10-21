@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { badRequest, notFound } from '../common/errors';
-import { loadSnapshot, type Snapshot } from '../common/snapshot';
+import { loadSnapshot, type ReminderItemRow, type Snapshot } from '../common/snapshot';
 import { folderSummary, personRef, primaryFolderColor, reminderStates, taskDueStatus, taskEarlyDate } from '../common/views';
 import { DB, type Db, type Tx } from '../db/client';
 import { assignees, matrices, reminderBatchItems, reminderBatches, taskDueDateChanges, tasks, type Task } from '../db/schema';
@@ -22,33 +22,69 @@ export class TasksService {
 
   async listForMatrix(slug: string, filter: TaskFilter) {
     const today = this.clock.today();
-    const snap = await loadSnapshot(this.db, { includeArchived: true });
+    const snap = await loadSnapshot(this.db, { includeArchived: true, items: 'none' });
     const m = [...snap.matrixById.values()].find((x) => x.slug === slug);
     if (!m) throw notFound('Pasta não encontrada.', 'matrix_not_found');
 
-    const changes = await this.db
-      .select()
-      .from(taskDueDateChanges)
-      .innerJoin(tasks, eq(tasks.id, taskDueDateChanges.taskId))
-      .where(eq(tasks.matrixId, m.id))
-      .orderBy(asc(taskDueDateChanges.createdAt));
-    const lastChange = new Map<string, (typeof changes)[number]['task_due_date_changes']>();
-    for (const c of changes) lastChange.set(c.task_due_date_changes.taskId, c.task_due_date_changes);
+    const [mine, changes] = await Promise.all([
+      this.db.select().from(tasks).where(eq(tasks.matrixId, m.id)).orderBy(asc(tasks.position)),
+      this.db
+        .select()
+        .from(taskDueDateChanges)
+        .innerJoin(tasks, eq(tasks.id, taskDueDateChanges.taskId))
+        .where(eq(tasks.matrixId, m.id))
+        .orderBy(asc(taskDueDateChanges.createdAt)),
+    ]);
+    const folderItems = mine.length
+      ? await this.db
+          .select({
+            taskId: reminderBatchItems.taskId,
+            batchId: reminderBatchItems.batchId,
+            kind: reminderBatchItems.kind,
+            channel: reminderBatchItems.channel,
+            dueDateSnapshot: reminderBatchItems.dueDateSnapshot,
+            isActive: reminderBatchItems.isActive,
+            batchStatus: reminderBatches.status,
+            createdAt: reminderBatches.createdAt,
+          })
+          .from(reminderBatchItems)
+          .innerJoin(reminderBatches, eq(reminderBatches.id, reminderBatchItems.batchId))
+          .where(inArray(reminderBatchItems.taskId, mine.map((t) => t.id)))
+      : [];
 
-    const mine = snap.tasks.filter((t) => t.matrixId === m.id);
+    // Mescla as demandas e os itens da pasta no snapshot limitado: os filtrados
+    // (concluídas, prorrogadas) também precisam de lembrete e pré-requisito.
+    const taskById = new Map(snap.taskById);
+    const itemsByTask = new Map(snap.itemsByTask);
+    for (const t of mine) taskById.set(t.id, t);
+    for (const it of folderItems) {
+      const list = itemsByTask.get(it.taskId) ?? [];
+      list.push(it);
+      itemsByTask.set(it.taskId, list);
+    }
+    const view: Snapshot = { ...snap, taskById, itemsByTask };
+
+    const lastChange = new Map<string, (typeof changes)[number]['task_due_date_changes']>();
+    const extended = new Set<string>();
+    for (const c of changes) {
+      lastChange.set(c.task_due_date_changes.taskId, c.task_due_date_changes);
+      if (c.task_due_date_changes.kind === 'extension') extended.add(c.task_due_date_changes.taskId);
+    }
+
     const open = mine.filter((t) => t.status === 'pending');
-    const extended = mine.filter((t) => t.status !== 'canceled' && snap.extendedTaskIds.has(t.id));
-    const selected = filter === 'open' ? open : filter === 'done' ? mine.filter((t) => t.status === 'done') : extended;
+    const extendedMine = mine.filter((t) => t.status !== 'canceled' && extended.has(t.id));
+    const selected = filter === 'open' ? open : filter === 'done' ? mine.filter((t) => t.status === 'done') : extendedMine;
     const weekEnd = addDays(startOfWeek(today), 6);
+    const colorByAssignee = new Map(snap.assignees.map((a) => [a.id, primaryFolderColor(snap, a.id, today)]));
 
     return {
       today,
-      matrix: folderSummary(snap, m, today),
+      matrix: folderSummary(view, m, today),
       filter,
       counts: {
         open: open.length,
         done: mine.filter((t) => t.status === 'done').length,
-        extended: extended.length,
+        extended: extendedMine.length,
         canceled: mine.filter((t) => t.status === 'canceled').length,
         total: mine.filter((t) => t.status !== 'canceled').length,
       },
@@ -59,7 +95,7 @@ export class TasksService {
       tasks: selected.map((t) => {
         const c = lastChange.get(t.id);
         return {
-          ...this.row(snap, t, today),
+          ...this.row(view, t, today, colorByAssignee, extended),
           lastChange: c
             ? {
                 kind: c.kind,
@@ -75,7 +111,7 @@ export class TasksService {
     };
   }
 
-  private row(snap: Snapshot, t: Task, today: string) {
+  private row(snap: Snapshot, t: Task, today: string, colorByAssignee: Map<string, ReturnType<typeof primaryFolderColor>>, extended: Set<string>) {
     const a = snap.assigneeById.get(t.assigneeId)!;
     const pre = t.prerequisiteTaskId ? snap.taskById.get(t.prerequisiteTaskId) : undefined;
     return {
@@ -84,14 +120,14 @@ export class TasksService {
       position: t.position,
       title: t.title,
       notes: t.notes,
-      assignee: personRef(a, primaryFolderColor(snap, a.id, today)),
+      assignee: personRef(a, colorByAssignee.get(a.id) ?? null),
       dueDate: t.dueDate,
       earlyDate: taskEarlyDate(snap, t),
       taskStatus: t.status,
       status: taskDueStatus(t, today),
       prerequisite: pre ? { taskId: pre.id, title: pre.title } : t.prerequisiteNote ? { note: t.prerequisiteNote } : null,
       reminders: reminderStates(snap, t, today),
-      isExtended: snap.extendedTaskIds.has(t.id),
+      isExtended: extended.has(t.id),
       completedAt: t.completedAt?.toISOString() ?? null,
       createdAt: t.createdAt.toISOString(),
     };
@@ -272,10 +308,16 @@ export class TasksService {
   async search(q: string) {
     const today = this.clock.today();
     const needle = fold(q.trim());
-    const snap = await loadSnapshot(this.db);
+    const [snap, rows] = await Promise.all([
+      loadSnapshot(this.db, { items: 'none' }),
+      this.db
+        .select({ id: tasks.id, title: tasks.title, dueDate: tasks.dueDate, status: tasks.status, matrixId: tasks.matrixId, assigneeId: tasks.assigneeId })
+        .from(tasks)
+        .where(ne(tasks.status, 'canceled')),
+    ]);
     const visible = new Set(snap.matrices.map((m) => m.id));
-    const hits = snap.tasks.filter((t) => {
-      if (t.status === 'canceled' || !visible.has(t.matrixId)) return false;
+    const hits = rows.filter((t) => {
+      if (!visible.has(t.matrixId)) return false;
       const a = snap.assigneeById.get(t.assigneeId);
       return fold(t.title).includes(needle) || (a ? fold(a.fullName).includes(needle) : false);
     });
