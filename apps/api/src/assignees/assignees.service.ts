@@ -43,7 +43,9 @@ export class AssigneesService {
         isActive: a.isActive,
         color: primaryFolderColor(snap, a.id, today),
         openCount: open.length,
-        nextDue: next ? { date: next.dueDate, taskId: next.id, title: next.title, status: taskDueStatus(next, today) } : null,
+        nextDue: next
+          ? { date: next.dueDate, taskId: next.id, title: next.title, matrixSlug: snap.matrixById.get(next.matrixId)?.slug ?? '', status: taskDueStatus(next, today) }
+          : null,
         folderColors: folderColorsForAssignee(snap, a.id),
         createdAt: a.createdAt.toISOString(),
       };

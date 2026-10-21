@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { buttonClass } from "@/components/Button";
 import { api } from "@/lib/api";
 import type { FolderSummary } from "@/lib/api-types";
 
 export default async function FoldersIndex() {
+  await connection();
   const folders = await api<FolderSummary[]>("/matrices");
   const first = folders.find((f) => !f.isArchived);
   if (first) redirect(`/pastas/${first.slug}`);

@@ -24,15 +24,13 @@ export function SearchBox({ className = "" }: { className?: string }) {
   const [active, setActive] = useState(0);
   const boxRef = useRef<HTMLDivElement>(null);
 
+  const term = q.trim();
+  const searching = term.length >= 2;
+
   useEffect(() => {
-    const term = q.trim();
-    if (term.length < 2) {
-      setResult(null);
-      setError(null);
-      return;
-    }
-    setLoading(true);
+    if (!searching) return;
     const t = setTimeout(async () => {
+      setLoading(true);
       const res = await searchAction(term);
       setLoading(false);
       if (res.ok) {
@@ -42,7 +40,7 @@ export function SearchBox({ className = "" }: { className?: string }) {
       setActive(0);
     }, 180);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [term, searching]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -52,13 +50,18 @@ export function SearchBox({ className = "" }: { className?: string }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  const shown = searching ? result : null;
+  const shownError = searching ? error : null;
   const hits: Hit[] = useMemo(() => {
+    const result = shown;
     if (!result) return [];
     return [
       ...result.groups.flatMap((g) => g.tasks.map((t) => ({ key: t.id, href: `/pastas/${g.folder.slug}?filtro=${t.taskStatus === "done" ? "done" : "open"}&demanda=${t.id}` }))),
       ...result.people.map((p) => ({ key: p.id, href: `/responsaveis?pessoa=${p.id}` })),
     ];
-  }, [result]);
+  }, [shown]);
+  const taskCount = shown ? shown.groups.reduce((n, g) => n + g.tasks.length, 0) : 0;
+  const groupStart = shown ? shown.groups.map((_, gi) => shown.groups.slice(0, gi).reduce((n, g) => n + g.tasks.length, 0)) : [];
 
   const go = (href: string) => {
     setOpen(false);
@@ -66,8 +69,7 @@ export function SearchBox({ className = "" }: { className?: string }) {
     router.push(href);
   };
 
-  let idx = -1;
-  const showPanel = open && q.trim().length >= 2;
+  const showPanel = open && searching;
 
   return (
     <div ref={boxRef} className={`relative ${className}`}>
@@ -105,24 +107,23 @@ export function SearchBox({ className = "" }: { className?: string }) {
       />
       {showPanel && (
         <div id={listId} role="listbox" className="absolute top-12 right-0 z-50 w-[min(420px,calc(100vw-32px))] rounded-card border-[1.5px] border-line bg-surface p-3">
-          {loading && !result && (
+          {loading && !shown && (
             <div className="flex flex-col gap-2 p-2" aria-label="Buscando">
               <span className="skeleton h-4 w-1/3" />
               <span className="skeleton h-10 w-full" />
               <span className="skeleton h-10 w-full" />
             </div>
           )}
-          {error && <p className="p-3 text-[13px] text-late-fg">{error}</p>}
-          {result && hits.length === 0 && <p className="p-3 text-[14px] text-ink-2">Nada encontrado para “{q.trim()}”.</p>}
-          {result?.groups.map((g) => (
+          {shownError && <p className="p-3 text-[13px] text-late-fg">{shownError}</p>}
+          {shown && hits.length === 0 && <p className="p-3 text-[14px] text-ink-2">Nada encontrado para “{term}”.</p>}
+          {shown?.groups.map((g, gi) => (
             <div key={g.folder.id} className="mb-1">
               <div className="flex items-center gap-2 px-3 pt-2 pb-1 text-[12px] font-bold" style={{ color: folderTheme[g.folder.color].ink }}>
                 <span className="h-[10px] w-[10px] rounded-[3px]" style={{ background: folderTheme[g.folder.color].solid }} />
                 {g.folder.name}
               </div>
-              {g.tasks.map((t) => {
-                idx += 1;
-                const i = idx;
+              {g.tasks.map((t, ti) => {
+                const i = groupStart[gi] + ti;
                 return (
                   <button
                     key={t.id}
@@ -145,12 +146,11 @@ export function SearchBox({ className = "" }: { className?: string }) {
               })}
             </div>
           ))}
-          {result && result.people.length > 0 && (
+          {shown && shown.people.length > 0 && (
             <div>
               <div className="px-3 pt-2 pb-1 text-[12px] font-bold text-ink-2">Pessoas</div>
-              {result.people.map((p) => {
-                idx += 1;
-                const i = idx;
+              {shown.people.map((p, pi) => {
+                const i = taskCount + pi;
                 return (
                   <button
                     key={p.id}

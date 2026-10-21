@@ -18,8 +18,9 @@ function greetingWord() {
 
 const vencem = (n: number) => (n === 1 ? "vence" : "vencem");
 
-export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
-  const { dia } = await searchParams;
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ dia?: string; nova?: string }> }) {
+  const { dia, nova } = await searchParams;
+  const openNew = nova === "1";
   const data = await api<Overview>("/overview");
   const { greeting, today } = data;
   const selectedDay = dia && data.ruler.columns.includes(dia) ? dia : null;
@@ -54,7 +55,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
       {data.folders.length === 0 ? (
         <section aria-label="Pastas" className="grid grid-cols-1 sm:max-w-[420px]">
-          <NewFolderCard suggestedColor="lilac" large />
+          <NewFolderCard suggestedColor="lilac" large autoOpen={openNew} />
         </section>
       ) : (
         <>
@@ -62,7 +63,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             {data.folders.map((f) => (
               <FolderCard key={f.id} folder={f} today={today} />
             ))}
-            <NewFolderCard suggestedColor={nextColor} />
+            <NewFolderCard suggestedColor={nextColor} autoOpen={openNew} />
           </section>
           <section aria-label="Pastas" className="-mx-4 -mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 md:hidden">
             {data.folders.map((f) => (

@@ -172,7 +172,7 @@ export interface Assignee {
   isActive: boolean;
   color: FolderColor | null;
   openCount: number;
-  nextDue: { date: IsoDate; taskId: string; title: string; status: DueStatus } | null;
+  nextDue: { date: IsoDate; taskId: string; title: string; matrixSlug: string; status: DueStatus } | null;
   folderColors: FolderColor[];
   createdAt: string;
 }

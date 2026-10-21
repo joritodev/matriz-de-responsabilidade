@@ -38,11 +38,20 @@ export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSum
   const titleRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      const fromPath = folders.find((f) => f.slug === currentSlug);
+      const nextId = fromPath?.id ?? (folderId || folders[0]?.id || "");
+      if (nextId !== folderId) setPrereq("");
+      setFolderId(nextId);
+      setErrors({});
+    }
+  }
+
   useEffect(() => {
     if (!open) return;
-    const fromPath = folders.find((f) => f.slug === currentSlug);
-    setFolderId((cur) => fromPath?.id ?? (cur || folders[0]?.id || ""));
-    setErrors({});
     const t = setTimeout(() => titleRef.current?.focus(), 30);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
@@ -50,13 +59,12 @@ export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSum
       clearTimeout(t);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, currentSlug, folders, setOpen]);
+  }, [open, setOpen]);
 
   const folder = folders.find((f) => f.id === folderId);
 
   useEffect(() => {
     if (!open || !folder) return;
-    setPrereq("");
     let alive = true;
     void prerequisiteOptionsAction(folder.slug).then((r) => alive && setOptions(r.ok ? r.data : []));
     return () => {
@@ -119,7 +127,10 @@ export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSum
           }}
         >
           <Field label="Pasta" htmlFor="nt-folder" error={errors.folder}>
-            <select id="nt-folder" className="field" value={folderId} onChange={(e) => setFolderId(e.target.value)}>
+            <select id="nt-folder" className="field" value={folderId} onChange={(e) => {
+                setFolderId(e.target.value);
+                setPrereq("");
+              }}>
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}

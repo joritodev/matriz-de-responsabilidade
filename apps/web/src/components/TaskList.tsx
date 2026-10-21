@@ -64,6 +64,11 @@ export function TaskList({
   initialSelected: string | null;
 }) {
   const [order, setOrder] = useState(tasks);
+  const [source, setSource] = useState(tasks);
+  if (source !== tasks) {
+    setSource(tasks);
+    setOrder(tasks);
+  }
   const [selected, setSelected] = useState<string | null>(initialSelected);
   const [dragId, setDragId] = useState<string | null>(null);
   const [, start] = useTransition();
@@ -71,7 +76,6 @@ export function TaskList({
   const canReorder = filter === "open";
   const isDesktop = useIsDesktop();
 
-  useEffect(() => setOrder(tasks), [tasks]);
   useEffect(() => {
     if (initialSelected) document.getElementById(`demanda-${initialSelected}`)?.scrollIntoView({ block: "center" });
   }, [initialSelected]);

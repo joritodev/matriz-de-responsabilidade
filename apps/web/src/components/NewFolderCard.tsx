@@ -10,8 +10,16 @@ import { Button } from "./Button";
 import { useToast } from "./Toast";
 
 /** "Nova pasta": cartão tracejado que vira formulário inline com nome e as 8 cores. */
-export function NewFolderCard({ suggestedColor = "sky", large = false }: { suggestedColor?: FolderColor; large?: boolean }) {
-  const [editing, setEditing] = useState(false);
+export function NewFolderCard({
+  suggestedColor = "sky",
+  large = false,
+  autoOpen = false,
+}: {
+  suggestedColor?: FolderColor;
+  large?: boolean;
+  autoOpen?: boolean;
+}) {
+  const [editing, setEditing] = useState(autoOpen);
   const [name, setName] = useState("");
   const [color, setColor] = useState<FolderColor>(suggestedColor);
   const [error, setError] = useState<string | null>(null);
