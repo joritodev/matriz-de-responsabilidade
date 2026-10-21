@@ -17,7 +17,7 @@ export class MatricesService {
 
   async list(includeArchived = false) {
     const today = this.clock.today();
-    const snap = await loadSnapshot(this.db, { includeArchived });
+    const snap = await loadSnapshot(this.db, { includeArchived, items: 'none' });
     return snap.matrices.map((m) => folderSummary(snap, m, today));
   }
 
