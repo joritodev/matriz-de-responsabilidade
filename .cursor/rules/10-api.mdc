@@ -1,0 +1,18 @@
+---
+description: Regras do backend NestJS (apps/api)
+globs: apps/api/**
+alwaysApply: false
+---
+
+# API (NestJS)
+
+- `apps/api/src/reminders/rules/reminder-rules.ts` é copiado de `starter/reminders/` e **não pode ter a lógica alterada**. Se uma tela precisar de algo novo, crie função nova ao lado e teste. Os testes de `reminder-rules.spec.ts` precisam continuar passando sem edição.
+- Banco via Drizzle ORM + `postgres` (postgres.js) apontando para o pooler de transação do Supabase (`DATABASE_URL`, porta 6543) com `prepare: false`. O esquema Drizzle espelha `supabase/migrations/*.sql`; as migrações SQL são a fonte de verdade (não use `drizzle-kit push`).
+- Toda escrita que mexe em mais de uma tabela roda em `db.transaction`.
+- Prorrogar prazo: inserir em `task_due_date_changes` e atualizar `tasks.due_date` na mesma transação. Nunca mudar `due_date` por outro caminho.
+- `POST /reminders/dispatch` reserva antes de devolver. Insira cada lote (batch + items) dentro de um savepoint; se der `unique_violation` (código 23505) em `reminder_items_once`, descarte aquele lote e siga. Nunca reenvie algo já reservado.
+- Rotas do Make usam o cabeçalho `x-api-key` comparado com `MAKE_API_KEY` por `crypto.timingSafeEqual`. Rotas do site usam `Authorization: Bearer <jwt do Supabase>` e exigem o e-mail na tabela `members`.
+- Validação de entrada com `zod` (ou `class-validator`), mensagens de erro em português pensadas para aparecer na tela.
+- Respostas em JSON com camelCase. Datas de negócio como `YYYY-MM-DD`; instantes como ISO 8601 com fuso.
+- `APP_FIXED_TODAY` só é aceito quando `NODE_ENV !== 'production'`.
+- Log de cada dispatch: quantos lotes, quantos pulados e por quê.

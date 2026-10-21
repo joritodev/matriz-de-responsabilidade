@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<title>Prazo, pasta OD Academy</title>
+<style>@font-face{font-family:'Onest';font-style:normal;font-weight:400;font-display:block;src:url(fonts/onest-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:500;font-display:block;src:url(fonts/onest-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:600;font-display:block;src:url(fonts/onest-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:700;font-display:block;src:url(fonts/onest-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:800;font-display:block;src:url(fonts/onest-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:400;font-display:block;src:url(fonts/geist-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:500;font-display:block;src:url(fonts/geist-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:block;src:url(fonts/geist-sans-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:700;font-display:block;src:url(fonts/geist-sans-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400;font-display:block;src:url(fonts/geist-mono-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:500;font-display:block;src:url(fonts/geist-mono-latin-500-normal.woff2) format('woff2')}
+</style>
+
+
+<style>
+body{margin:0}
+.app{--bg:#EEF0F3;--card:#FFFFFF;--ink:#16181D;--ink-2:#4B5160;--ink-3:#5E6573;--line:#E3E6EB;--soft:#F5F6F8;--o-bg:#CFF0E0;--o-ink:#11593A;--o-solid:#2E9E68;--o-wash:#EEF9F3;--late-bg:#FFE2E3;--late-ink:#A1141C;font-variant-numeric:tabular-nums}
+.app ::selection{background:var(--o-bg);color:var(--o-ink)}
+a{color:inherit}
+.pill{height:40px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 14px 'Onest',sans-serif;text-decoration:none;white-space:nowrap;box-sizing:border-box}
+.nav{color:var(--ink-2)}.nav:hover{background:#E2E5EA}
+.nav.on{background:var(--ink);color:#FFFFFF}
+.av{width:32px;height:32px;border-radius:50%;flex:0 0 32px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-sizing:border-box}
+.ftab{height:44px;padding:0 22px;border-radius:18px 18px 0 0;display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;text-decoration:none;align-self:flex-end}
+.chip{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.inp{height:44px;box-sizing:border-box;border-radius:14px;border:1.5px solid transparent;background:#FFFFFF;padding:0 14px;font:15px 'Onest',sans-serif;color:var(--ink);width:100%}
+.inp:focus{outline:none;border-color:var(--ink)}
+.lbl{font-size:12px;font-weight:600;color:var(--ink-2)}
+.drow{display:grid;grid-template-columns:40px minmax(0,2.6fr) minmax(0,1.3fr) 92px 150px 120px 112px;gap:16px;align-items:center;padding:14px 8px;border-top:1px solid var(--line)}
+.trk{display:flex;align-items:center;gap:0}
+.trk i{display:block;width:12px;height:12px;border-radius:50%;box-sizing:border-box}
+.trk s{display:block;width:34px;height:2px;background:#C9CED6;text-decoration:none}
+</style>
+</head>
+<body>
+
+
+<div class="app" style="min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'Onest', system-ui, sans-serif; padding: 20px 28px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px">
+    <a href="Geral.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 12px">
+      <span aria-hidden="true" style="position: relative; width: 30px; height: 24px; margin-top: 6px; background: var(--ink); border-radius: 0 7px 7px 7px"><span style="position: absolute; left: 0; top: -6px; width: 14px; height: 7px; background: var(--ink); border-radius: 5px 5px 0 0"></span></span>
+      <span style="font-size: 21px; font-weight: 800; letter-spacing: -0.03em">Prazo</span>
+    </a>
+    <nav aria-label="Principal" style="display: flex; flex-wrap: wrap; gap: 4px; background: var(--card); padding: 4px; border-radius: 999px">
+      <a class="pill nav" href="Geral.dc.html">Matriz geral</a>
+      <a class="pill nav on" href="Pasta.dc.html">Pastas</a>
+      <a class="pill nav" href="Pessoas.dc.html">Responsáveis</a>
+      <a class="pill nav" href="Cobr.dc.html">Cobranças</a>
+    </nav>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px">
+      <span class="av" style="width: 40px; height: 40px; flex-basis: 40px; background: #D9DDE4; color: var(--ink); font-size: 13px">VC</span>
+    </div>
+  </header>
+
+  <div>
+    <nav aria-label="Pastas" style="display: flex; gap: 6px; padding-left: 4px; overflow-x: auto">
+      <a class="ftab" href="Pasta.dc.html" style="background: #E6E0FF; color: #3D2C99; height: 38px">Geral <span style="font-weight: 500">5</span></a>
+      <a class="ftab" href="Pasta.dc.html" aria-current="page" style="background: var(--o-bg); color: var(--o-ink); height: 50px; padding: 0 28px; font-size: 17px">OD Academy <span style="font-weight: 500">4</span></a>
+      <a class="ftab" href="Pasta.dc.html" style="background: #FFE2CF; color: #8A3A0B; height: 38px">Pós-graduação <span style="font-weight: 500">6</span></a>
+      <a class="ftab" href="Pasta.dc.html" style="background: #FFF0B3; color: #614A00; height: 38px">Eventos <span style="font-weight: 500">2</span></a>
+      <a class="ftab" href="Pasta.dc.html" style="background: transparent; color: var(--ink-2); height: 38px; border: 2px dashed #C3C8D0; border-bottom: 0">Nova pasta</a>
+    </nav>
+
+    <section aria-label="Pasta OD Academy" style="background: var(--o-bg); border-radius: 0 28px 28px 28px; padding: 12px">
+      <div style="background: var(--card); border-radius: 20px; padding: 24px 24px 12px">
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+          <div>
+            <h1 style="margin: 0; font-size: 36px; line-height: 40px; font-weight: 700; letter-spacing: -0.035em">OD Academy</h1>
+            <p style="margin: 6px 0 0; font-size: 15px; color: var(--ink-2)">4 demandas abertas de 6. Duas vencem nesta semana.</p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button type="button" class="pill" style="border: 1.5px solid var(--line); background: #FFFFFF; color: var(--ink); cursor: pointer">Importar do Docs</button>
+            <button type="button" class="pill" style="border: 1.5px solid var(--line); background: #FFFFFF; color: var(--ink); cursor: pointer">Exportar</button>
+          </div>
+        </div>
+
+        <form style="margin-top: 20px; background: var(--o-wash); border-radius: 20px; padding: 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+          <div style="flex: 3 1 260px; display: flex; flex-direction: column; gap: 6px"><label class="lbl" for="p-t">Nova demanda</label><input id="p-t" class="inp" placeholder="O que precisa ser feito" style=""></div>
+          <div style="flex: 1.4 1 180px; display: flex; flex-direction: column; gap: 6px"><label class="lbl" for="p-r">Responsável</label><select id="p-r" class="inp"><option>Escolher pessoa</option></select></div>
+          <div style="flex: 1 1 130px; display: flex; flex-direction: column; gap: 6px"><label class="lbl" for="p-d">Prazo</label><input id="p-d" class="inp" placeholder="dd/mm" style=""></div>
+          <div style="flex: 1 1 150px; display: flex; flex-direction: column; gap: 6px"><label class="lbl" for="p-q">Pré-requisito</label><select id="p-q" class="inp"><option>Nenhum</option></select></div>
+          <button type="button" class="pill" style="height: 44px; border: 0; background: var(--ink); color: #FFFFFF; cursor: pointer">Lançar</button>
+        </form>
+
+        <div role="tablist" aria-label="Filtro" style="display: flex; flex-wrap: wrap; gap: 6px; margin: 22px 0 10px">
+          <button type="button" role="tab" aria-selected="true" class="pill" style="height: 34px; border: 0; background: var(--ink); color: #FFFFFF">Abertas 4</button>
+          <button type="button" role="tab" aria-selected="false" class="pill" style="height: 34px; border: 0; background: var(--soft); color: var(--ink-2)">Concluídas 2</button>
+          <button type="button" role="tab" aria-selected="false" class="pill" style="height: 34px; border: 0; background: var(--soft); color: var(--ink-2)">Prorrogadas 0</button>
+        </div>
+
+        <div style="overflow-x: auto">
+          <div style="min-width: 900px">
+            <div class="drow lbl" style="border-top: 0; padding-top: 4px; padding-bottom: 8px"><span>Nº</span><span>Tarefa</span><span>Responsável</span><span>Prazo</span><span>Cobranças</span><span>Situação</span><span></span></div>
+
+            <div class="drow" style="background: var(--o-wash); border-radius: 18px 18px 0 0; border-top-color: transparent">
+              <span class="av" style="background: #FFFFFF; color: var(--o-ink); font-size: 14px">1</span>
+              <span><b style="display: block; font-size: 16px; font-weight: 600">Atualizar ementa</b><span style="font-size: 13px; color: var(--ink-3)">sem pré-requisito</span></span>
+              <span style="display: flex; align-items: center; gap: 10px"><span class="av" style="background: var(--o-bg); color: var(--o-ink)">LM</span><span style="font-size: 14px">Larissa Menezes</span></span>
+              <span style="display: flex; flex-direction: column"><b style="font-size: 20px; font-weight: 700; line-height: 22px">23</b><span style="font-size: 12px; color: var(--ink-3)">out, sex</span></span>
+              <span class="trk" title="Antecipada enviada 20/10, no dia prevista 23/10"><i style="background: var(--ink)"></i><s></s><i style="border: 2px solid var(--ink)"></i></span>
+              <span><span class="chip" style="background: #FFF0B3; color: #614A00">em 3 dias</span></span>
+              <button type="button" class="pill" style="height: 34px; border: 0; background: var(--ink); color: #FFFFFF">Fechar</button>
+            </div>
+            <div style="background: var(--o-wash); border-radius: 0 0 18px 18px; padding: 4px 16px 18px 64px; display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+                <div style="flex: 1 1 120px; display: flex; flex-direction: column; gap: 6px"><label class="lbl" for="p-n">Novo prazo</label><input id="p-n" class="inp" value="30/10" style=""></div>
+                <div style="flex: 3 1 280px; display: flex; flex-direction: column; gap: 6px"><label class="lbl" for="p-m">Motivo</label><input id="p-m" class="inp" value="A coordenação ainda não validou a nova carga horária" style=""></div>
+                <div style="flex: 1.3 1 160px; display: flex; flex-direction: column; gap: 6px"><label class="lbl" for="p-a">Aprovado por</label><input id="p-a" class="inp" placeholder="Opcional" style=""></div>
+                <button type="button" class="pill" style="height: 44px; border: 0; background: var(--o-ink); color: #FFFFFF">Prorrogar</button>
+              </div>
+              <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 13px; color: var(--ink-2)">
+                <li><b style="color: var(--ink); font-weight: 600">02/10</b> criada com prazo 23/10</li>
+                <li><b style="color: var(--ink); font-weight: 600">20/10, 08:02</b> cobrança antecipada por WhatsApp</li>
+                <li>Prorrogando, as duas cobranças passam a valer para o novo prazo.</li>
+              </ol>
+            </div>
+
+            
+              <div class="drow">
+                <span class="av" style="background: var(--soft); color: var(--ink-2); font-size: 14px">2</span>
+                <span><b style="display: block; font-size: 16px; font-weight: 600">Revisar banco de questões</b><span style="font-size: 13px; color: var(--ink-3)">depende da ementa nova</span></span>
+                <span style="display: flex; align-items: center; gap: 10px"><span class="av" style="background: var(--o-bg); color: var(--o-ink)">LM</span><span style="font-size: 14px">Larissa Menezes</span></span>
+                <span style="display: flex; flex-direction: column"><b style="font-size: 20px; font-weight: 700; line-height: 22px">22</b><span style="font-size: 12px; color: var(--ink-3)">out, qui</span></span>
+                <span class="trk"><i style="flex: none; display:block;width:12px;height:12px;border-radius:50%;background:#16181D"></i><s></s><i style="border: 2px solid #16181D"></i></span>
+                <span><span class="chip" style="background: #FFF0B3; color: #614A00">em 2 dias</span></span>
+                <button type="button" class="pill" style="height: 34px; border: 1.5px solid var(--line); background: #FFFFFF; color: var(--ink)">Prorrogar</button>
+              </div>
+            
+              <div class="drow">
+                <span class="av" style="background: var(--soft); color: var(--ink-2); font-size: 14px">3</span>
+                <span><b style="display: block; font-size: 16px; font-weight: 600">Gravar aula inaugural</b><span style="font-size: 13px; color: var(--ink-3)">sem pré-requisito</span></span>
+                <span style="display: flex; align-items: center; gap: 10px"><span class="av" style="background: var(--o-bg); color: var(--o-ink)">JV</span><span style="font-size: 14px">João Victor Lima</span></span>
+                <span style="display: flex; flex-direction: column"><b style="font-size: 20px; font-weight: 700; line-height: 22px">26</b><span style="font-size: 12px; color: var(--ink-3)">out, seg</span></span>
+                <span class="trk"><i style="flex: none; display:block;width:12px;height:12px;border-radius:50%;box-sizing:border-box;border:2px solid #16181D"></i><s></s><i style="border: 2px solid #16181D"></i></span>
+                <span><span class="chip" style="background: #F0F1F4; color: #16181D">no prazo</span></span>
+                <button type="button" class="pill" style="height: 34px; border: 1.5px solid var(--line); background: #FFFFFF; color: var(--ink)">Prorrogar</button>
+              </div>
+            
+              <div class="drow">
+                <span class="av" style="background: var(--soft); color: var(--ink-2); font-size: 14px">4</span>
+                <span><b style="display: block; font-size: 16px; font-weight: 600">Montar página do curso</b><span style="font-size: 13px; color: var(--ink-3)">depende da aula gravada</span></span>
+                <span style="display: flex; align-items: center; gap: 10px"><span class="av" style="background: var(--o-bg); color: var(--o-ink)">RP</span><span style="font-size: 14px">Rafael Pinheiro</span></span>
+                <span style="display: flex; flex-direction: column"><b style="font-size: 20px; font-weight: 700; line-height: 22px">30</b><span style="font-size: 12px; color: var(--ink-3)">out, sex</span></span>
+                <span class="trk"><i style="flex: none; display:block;width:12px;height:12px;border-radius:50%;box-sizing:border-box;border:2px solid #16181D"></i><s></s><i style="border: 2px solid #16181D"></i></span>
+                <span><span class="chip" style="background: #F0F1F4; color: #16181D">no prazo</span></span>
+                <button type="button" class="pill" style="height: 34px; border: 1.5px solid var(--line); background: #FFFFFF; color: var(--ink)">Prorrogar</button>
+              </div>
+            
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+
+
+
+</body></html>

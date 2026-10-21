@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<title>Tabelas no Supabase</title>
+<style>@font-face{font-family:'Onest';font-style:normal;font-weight:400;font-display:block;src:url(fonts/onest-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:500;font-display:block;src:url(fonts/onest-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:600;font-display:block;src:url(fonts/onest-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:700;font-display:block;src:url(fonts/onest-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:800;font-display:block;src:url(fonts/onest-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:400;font-display:block;src:url(fonts/geist-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:500;font-display:block;src:url(fonts/geist-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:block;src:url(fonts/geist-sans-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:700;font-display:block;src:url(fonts/geist-sans-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400;font-display:block;src:url(fonts/geist-mono-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:500;font-display:block;src:url(fonts/geist-mono-latin-500-normal.woff2) format('woff2')}
+</style>
+
+
+<style>
+body{margin:0}
+.tb{background:#FFFFFF;border:1px solid #DDE1E6;border-radius:12px;display:flex;flex-direction:column}
+.tb h3{margin:0;padding:16px 20px 4px;font:500 16px/24px 'Geist Mono',monospace}
+.tb p{margin:0;padding:0 20px 12px;font-size:13px;line-height:19px;color:#4A515C;border-bottom:1px solid #EEF0F3}
+.col{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:4px 12px;padding:8px 20px;font-size:13px;line-height:18px;border-bottom:1px solid #F3F4F6}
+.col:last-child{border-bottom:0}
+.col code{font-family:'Geist Mono',monospace;font-size:12.5px;color:#15181D}
+.col span{color:#5F6772;font-family:'Geist Mono',monospace;font-size:12px}
+.col em{grid-column:1 / -1;font-style:normal;color:#4A515C;font-size:12px}
+.k{color:#2447C9}
+</style>
+</head>
+<body>
+
+
+<div style="width: 1440px; min-height: 1320px; box-sizing: border-box; padding: 64px; background: #F6F7F8; color: #15181D; font-family: 'Geist', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div>
+    <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em">Tabelas no Supabase (Postgres)</h1>
+    <p style="margin: 6px 0 0; max-width: 900px; font-size: 15px; line-height: 22px; color: #4A515C">Nomes de tabelas e colunas em inglês, snake_case, como o código vai usar. A interface fica toda em português. A planilha atual vira <code style="font-family: 'Geist Mono', monospace">matrices</code> + <code style="font-family: 'Geist Mono', monospace">tasks</code>.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start">
+    <section class="tb">
+      <h3>tasks</h3>
+      <p>Demandas. Uma linha por tarefa da matriz.</p>
+      <div class="col"><code><span class="k">id</span></code><span>uuid, pk</span></div>
+      <div class="col"><code>matrix_id</code><span>uuid, fk matrices</span></div>
+      <div class="col"><code>position</code><span>int</span><em>Ordem</em></div>
+      <div class="col"><code>assignee_id</code><span>uuid, fk assignees</span><em>Responsável</em></div>
+      <div class="col"><code>title</code><span>text</span><em>Tarefa</em></div>
+      <div class="col"><code>due_date</code><span>date</span><em>Prazo</em></div>
+      <div class="col"><code>has_prerequisite</code><span>boolean</span><em>Possui pré-requisito?</em></div>
+      <div class="col"><code>prerequisite_note</code><span>text, null</span></div>
+      <div class="col"><code>status</code><span>task_status</span><em>pending, done, canceled</em></div>
+      <div class="col"><code>notes</code><span>text, null</span><em>Obs.</em></div>
+      <div class="col"><code>completed_at</code><span>timestamptz, null</span></div>
+      <div class="col"><code>created_at, updated_at</code><span>timestamptz</span></div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 20px">
+      <section class="tb">
+        <h3>matrices</h3>
+        <p>Matrizes de responsabilidade (Geral, OD Academy...).</p>
+        <div class="col"><code><span class="k">id</span></code><span>uuid, pk</span></div>
+        <div class="col"><code>name</code><span>text, único</span></div>
+        <div class="col"><code>slug</code><span>text, único</span><em>usado na URL: /pastas/od-academy</em></div>
+        <div class="col"><code>color</code><span>folder_color</span><em>cor da pasta: lilac, mint, peach, lemon...</em></div>
+        <div class="col"><code>position</code><span>int</span><em>ordem das pastas</em></div>
+        <div class="col"><code>description</code><span>text, null</span></div>
+        <div class="col"><code>is_archived</code><span>boolean, false</span></div>
+        <div class="col"><code>created_at, updated_at</code><span>timestamptz</span></div>
+      </section>
+      <section class="tb">
+        <h3>assignees</h3>
+        <p>Responsáveis e como falar com cada um.</p>
+        <div class="col"><code><span class="k">id</span></code><span>uuid, pk</span></div>
+        <div class="col"><code>full_name</code><span>text</span></div>
+        <div class="col"><code>whatsapp_e164</code><span>text, null</span><em>só números: 5511998124470</em></div>
+        <div class="col"><code>email</code><span>text, null</span></div>
+        <div class="col"><code>reminder_channel</code><span>reminder_channel</span><em>whatsapp, email, both</em></div>
+        <div class="col"><code>is_active</code><span>boolean, true</span></div>
+        <div class="col"><code>created_at, updated_at</code><span>timestamptz</span></div>
+      </section>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 20px">
+      <section class="tb">
+        <h3>task_due_date_changes</h3>
+        <p>Prorrogações, com motivo. Nada é apagado.</p>
+        <div class="col"><code><span class="k">id</span></code><span>uuid, pk</span></div>
+        <div class="col"><code>task_id</code><span>uuid, fk tasks</span></div>
+        <div class="col"><code>previous_due_date</code><span>date</span></div>
+        <div class="col"><code>new_due_date</code><span>date</span></div>
+        <div class="col"><code>reason</code><span>text, obrigatório</span></div>
+        <div class="col"><code>approved_by</code><span>text, null</span></div>
+        <div class="col"><code>created_at</code><span>timestamptz</span></div>
+      </section>
+      <section class="tb">
+        <h3>reminder_batches</h3>
+        <p>Uma mensagem enviada (ou tentada) para uma pessoa.</p>
+        <div class="col"><code><span class="k">id</span></code><span>uuid, pk</span></div>
+        <div class="col"><code>assignee_id</code><span>uuid, fk assignees</span></div>
+        <div class="col"><code>channel</code><span>whatsapp, email</span></div>
+        <div class="col"><code>sent_on</code><span>date</span><em>data local, America/Fortaleza</em></div>
+        <div class="col"><code>status</code><span>queued, sent, failed</span><em>queued = reservada, aguardando o Make</em></div>
+        <div class="col"><code>message_body</code><span>text</span></div>
+        <div class="col"><code>provider_message_id</code><span>text, null</span></div>
+        <div class="col"><code>error_message</code><span>text, null</span></div>
+        <div class="col"><code>make_execution_id</code><span>text, null</span></div>
+        <div class="col"><code>created_at</code><span>timestamptz</span></div>
+      </section>
+    </section>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start">
+    <section class="tb">
+      <h3>reminder_batch_items</h3>
+      <p>Quais demandas foram em cada mensagem. É aqui que mora a trava contra repetição.</p>
+      <div class="col"><code><span class="k">id</span></code><span>uuid, pk</span></div>
+      <div class="col"><code>batch_id</code><span>uuid, fk reminder_batches</span></div>
+      <div class="col"><code>task_id</code><span>uuid, fk tasks</span></div>
+      <div class="col"><code>kind</code><span>reminder_kind</span><em>early (antecipada), due (no dia)</em></div>
+      <div class="col"><code>due_date_snapshot</code><span>date</span><em>o prazo no momento do envio</em></div>
+      <div class="col"><code>channel</code><span>whatsapp, email</span></div>
+      <div class="col"><code>is_active</code><span>boolean, true</span><em>vira false quando o envio falha</em></div>
+      <div class="col" style="background: #E8EDFC"><code>unique (task_id, kind, due_date_snapshot, channel) where is_active</code><em>o banco recusa a mesma cobrança duas vezes</em></div>
+    </section>
+
+    <section style="grid-column: span 2; background: #15181D; color: #E8EBEF; border-radius: 12px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 600">Regra de cobrança, aplicada só no backend</h2>
+      <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 21px; color: #C9D0D9">
+        <li>Roda só em dia útil: segunda a sexta, fora dos feriados da tabela <code style="font-family: 'Geist Mono', monospace; color: #E8EBEF">holidays</code>. "Hoje" é sempre a data em America/Fortaleza, nunca UTC.</li>
+        <li>Só entram demandas com <code style="font-family: 'Geist Mono', monospace; color: #E8EBEF">status = pending</code> de responsáveis ativos.</li>
+        <li><b style="color: #E8EBEF">No dia (due):</b> hoje é o prazo. Se o prazo cair em sábado, domingo ou feriado, essa cobrança sai no dia útil anterior.</li>
+        <li><b style="color: #E8EBEF">Antecipada (early):</b> faltam de 1 a 3 dias corridos e hoje não é o dia da cobrança "no dia". Se o D-3 cair no fim de semana, a janela pega no próximo dia útil. Se fim de semana e feriado ocuparem a janela inteira, sai no dia útil anterior, nunca antes de D-5.</li>
+        <li>Pula qualquer demanda que já tenha reserva ativa com o mesmo <code style="font-family: 'Geist Mono', monospace; color: #E8EBEF">kind</code>, o mesmo prazo e o mesmo canal. No máximo uma cobrança por demanda por dia. A reserva acontece antes do envio, então rodar duas vezes não duplica.</li>
+        <li>Agrupa tudo por responsável: uma mensagem por pessoa por dia.</li>
+        <li>Prorrogou? O <code style="font-family: 'Geist Mono', monospace; color: #E8EBEF">due_date</code> muda, o snapshot antigo deixa de bater e as duas cobranças voltam a valer sozinhas. Nada para limpar à mão.</li>
+      </ol>
+      <p style="margin: 0; font-size: 13px; line-height: 19px; color: #A9B1BC">Acesso ao site: Supabase Auth com o seu e-mail. O Make fala com o backend por uma chave própria (<code style="font-family: 'Geist Mono', monospace">MAKE_API_KEY</code>), nunca com o banco direto.</p>
+    </section>
+  </div>
+</div>
+
+
+
+
+</body></html>

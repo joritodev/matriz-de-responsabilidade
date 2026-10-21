@@ -1,0 +1,15 @@
+---
+description: Regras gerais do projeto Prazo
+alwaysApply: true
+---
+
+# Projeto Prazo
+
+- Leia `PROMPT.md` antes de qualquer tarefa grande. Ele define fases; execute uma fase por vez e pare no checkpoint indicado para o usuário testar.
+- Interface 100% em português do Brasil. Código, nomes de arquivos, tabelas, colunas, variáveis e rotas da API em inglês.
+- Monorepo pnpm: `apps/web` (Next.js) e `apps/api` (NestJS). Banco em `supabase/`. Não crie pacote compartilhado; tipos que o web precisa ficam em `apps/web/src/lib/api-types.ts`.
+- TypeScript estrito nos dois apps. Sem `any` implícito.
+- Datas de negócio são `date` (string `YYYY-MM-DD`), nunca `Date` com hora. "Hoje" vem sempre de `todayInTimeZone(new Date(), 'America/Fortaleza')`.
+- Não invente dados de exemplo fora de `supabase/seed.sql`.
+- Antes de dizer que uma fase terminou: `pnpm -r typecheck`, `pnpm -r test` e `pnpm -r build` passando.
+- Commits pequenos, mensagem em português no imperativo ("Adiciona prorrogação inline").

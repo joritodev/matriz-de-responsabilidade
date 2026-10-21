@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<title>Prazo, cobranças</title>
+<style>@font-face{font-family:'Onest';font-style:normal;font-weight:400;font-display:block;src:url(fonts/onest-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:500;font-display:block;src:url(fonts/onest-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:600;font-display:block;src:url(fonts/onest-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:700;font-display:block;src:url(fonts/onest-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Onest';font-style:normal;font-weight:800;font-display:block;src:url(fonts/onest-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:400;font-display:block;src:url(fonts/geist-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:500;font-display:block;src:url(fonts/geist-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:block;src:url(fonts/geist-sans-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:700;font-display:block;src:url(fonts/geist-sans-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400;font-display:block;src:url(fonts/geist-mono-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:500;font-display:block;src:url(fonts/geist-mono-latin-500-normal.woff2) format('woff2')}
+</style>
+
+
+<style>
+body{margin:0}
+.app{--bg:#EEF0F3;--card:#FFFFFF;--ink:#16181D;--ink-2:#4B5160;--ink-3:#5E6573;--line:#E3E6EB;--soft:#F5F6F8;font-variant-numeric:tabular-nums}
+a{color:inherit}
+.pill{height:40px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font:600 14px 'Onest',sans-serif;text-decoration:none;white-space:nowrap;box-sizing:border-box}
+.nav{color:var(--ink-2)}.nav:hover{background:#E2E5EA}
+.nav.on{background:var(--ink);color:#FFFFFF}
+.av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;box-sizing:border-box;flex:none}
+.chip{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.day{font-size:13px;font-weight:700;color:var(--ink-3);padding:18px 0 6px}
+.ent{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:18px}
+.ent:hover{background:var(--soft)}
+</style>
+</head>
+<body>
+
+
+<div class="app" style="min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'Onest', system-ui, sans-serif; padding: 20px 28px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px">
+    <a href="Geral.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 12px">
+      <span aria-hidden="true" style="position: relative; width: 30px; height: 24px; margin-top: 6px; background: var(--ink); border-radius: 0 7px 7px 7px"><span style="position: absolute; left: 0; top: -6px; width: 14px; height: 7px; background: var(--ink); border-radius: 5px 5px 0 0"></span></span>
+      <span style="font-size: 21px; font-weight: 800; letter-spacing: -0.03em">Prazo</span>
+    </a>
+    <nav aria-label="Principal" style="display: flex; flex-wrap: wrap; gap: 4px; background: var(--card); padding: 4px; border-radius: 999px">
+      <a class="pill nav" href="Geral.dc.html">Matriz geral</a>
+      <a class="pill nav" href="Pasta.dc.html">Pastas</a>
+      <a class="pill nav" href="Pessoas.dc.html">Responsáveis</a>
+      <a class="pill nav on" href="Cobr.dc.html">Cobranças</a>
+    </nav>
+    <div style="margin-left: auto"><span class="av" style="width: 40px; height: 40px; background: #D9DDE4; color: var(--ink); font-size: 13px">VC</span></div>
+  </header>
+
+  <section style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+    <div>
+      <h1 style="margin: 0; font-size: 40px; line-height: 44px; font-weight: 700; letter-spacing: -0.035em">Cobranças</h1>
+      <p style="margin: 8px 0 0; font-size: 16px; color: var(--ink-2)">Tudo o que saiu às 08:00 e o que sai amanhã.</p>
+    </div>
+    <div role="tablist" aria-label="Visão" style="display: flex; gap: 4px; background: var(--card); padding: 4px; border-radius: 999px">
+      <button type="button" role="tab" aria-selected="true" class="pill" style="border: 0; background: var(--ink); color: #FFFFFF">Enviadas</button>
+      <button type="button" role="tab" aria-selected="false" class="pill" style="border: 0; background: transparent; color: var(--ink-2)">Prévia de amanhã</button>
+    </div>
+  </section>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-label="Histórico" style="flex: 999 1 560px; min-width: 0; background: var(--card); border-radius: 24px; padding: 8px 14px 18px">
+      
+        <div>
+          <div class="day" style="padding-left: 14px">Hoje, terça 20</div>
+          
+            <div class="ent" style="background: transparent">
+              <span class="av" style="width: 40px; height: 40px; background: #E6E0FF; color: #3D2C99; font-size: 13px">MA</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Matheus Araújo</b><span style="font-size: 13px; color: var(--ink-3)">WhatsApp, 08:02, no dia</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #8676F0; flex: none"></span>Atualizar a Assinatura Suprema no Site</div>
+              </div>
+              <span class="chip" style="background: #F0F1F4; color: #16181D">enviada</span>
+            </div>
+          
+            <div class="ent" style="background: transparent">
+              <span class="av" style="width: 40px; height: 40px; background: #FFE2CF; color: #8A3A0B; font-size: 13px">BT</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Bianca Torres</b><span style="font-size: 13px; color: var(--ink-3)">WhatsApp, 08:02, no dia</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #EE8640; flex: none"></span>Fechar lista de presença do módulo 3</div>
+              </div>
+              <span class="chip" style="background: #F0F1F4; color: #16181D">enviada</span>
+            </div>
+          
+            <div class="ent" style="background: #F5F6F8">
+              <span class="av" style="width: 40px; height: 40px; background: #CFF0E0; color: #11593A; font-size: 13px">LM</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Larissa Menezes</b><span style="font-size: 13px; color: var(--ink-3)">WhatsApp, 08:02, antecipada</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #2E9E68; flex: none"></span>Atualizar ementa</div>
+              </div>
+              <span class="chip" style="background: #F0F1F4; color: #16181D">enviada</span>
+            </div>
+          
+            <div class="ent" style="background: transparent">
+              <span class="av" style="width: 40px; height: 40px; background: #FFE2CF; color: #8A3A0B; font-size: 13px">RP</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Rafael Pinheiro</b><span style="font-size: 13px; color: var(--ink-3)">E-mail, 08:03, antecipada</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #EE8640; flex: none"></span>Divulgar calendário da Pós</div>
+              </div>
+              <span class="chip" style="background: #FFE2E3; color: #A1141C">falhou</span>
+            </div>
+          
+        </div>
+      
+        <div>
+          <div class="day" style="padding-left: 14px">Ontem, segunda 19</div>
+          
+            <div class="ent" style="background: transparent">
+              <span class="av" style="width: 40px; height: 40px; background: #E6E0FF; color: #3D2C99; font-size: 13px">MA</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Matheus Araújo</b><span style="font-size: 13px; color: var(--ink-3)">WhatsApp, 08:02, antecipada, 2 demandas</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #8676F0; flex: none"></span>Atualizar a Assinatura Suprema no Site e Revisar contrato de tutoria</div>
+              </div>
+              <span class="chip" style="background: #F0F1F4; color: #16181D">enviada</span>
+            </div>
+          
+            <div class="ent" style="background: transparent">
+              <span class="av" style="width: 40px; height: 40px; background: #FFE2CF; color: #8A3A0B; font-size: 13px">BT</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Bianca Torres</b><span style="font-size: 13px; color: var(--ink-3)">WhatsApp, 08:02, antecipada</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #EE8640; flex: none"></span>Fechar lista de presença do módulo 3</div>
+              </div>
+              <span class="chip" style="background: #F0F1F4; color: #16181D">enviada</span>
+            </div>
+          
+            <div class="ent" style="background: transparent">
+              <span class="av" style="width: 40px; height: 40px; background: #CFF0E0; color: #11593A; font-size: 13px">LM</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Larissa Menezes</b><span style="font-size: 13px; color: var(--ink-3)">WhatsApp, 08:02, antecipada</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #2E9E68; flex: none"></span>Revisar banco de questões</div>
+              </div>
+              <span class="chip" style="background: #F0F1F4; color: #16181D">enviada</span>
+            </div>
+          
+        </div>
+      
+        <div>
+          <div class="day" style="padding-left: 14px">Sexta, 16</div>
+          
+            <div class="ent" style="background: transparent">
+              <span class="av" style="width: 40px; height: 40px; background: #E6E0FF; color: #3D2C99; font-size: 13px">BT</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center"><b style="font-size: 15px; font-weight: 600">Bianca Torres</b><span style="font-size: 13px; color: var(--ink-3)">WhatsApp, 08:01, no dia (prazo no domingo)</span></div>
+                <div style="font-size: 14px; color: var(--ink-2); display: flex; gap: 8px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 3px; background: #8676F0; flex: none"></span>Enviar relatório de matrículas</div>
+              </div>
+              <span class="chip" style="background: #F0F1F4; color: #16181D">enviada</span>
+            </div>
+          
+        </div>
+      
+    </section>
+
+    <aside aria-label="Mensagem selecionada" style="flex: 1 0 380px; max-width: 100%; box-sizing: border-box; background: var(--card); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span class="av" style="width: 44px; height: 44px; background: #CFF0E0; color: #11593A; font-size: 14px">LM</span>
+        <div><b style="font-size: 16px; font-weight: 600">Larissa Menezes</b><div style="font-size: 13px; color: var(--ink-3)">WhatsApp, hoje às 08:02</div></div>
+      </div>
+      <div style="background: #E9EDE7; border-radius: 20px; padding: 18px">
+        <div style="background: #FFFFFF; border-radius: 6px 18px 18px 18px; padding: 14px 16px; font-size: 14px; line-height: 21px; white-space: pre-line; box-shadow: 0 1px 1px rgba(22,24,29,.08)">Bom dia, Larissa. Como está o andamento desta demanda?
+
+<b>Demanda 1</b>
+Matriz: OD Academy
+Demanda: Atualizar ementa
+Responsável: Larissa Menezes
+Deadline: 23/10 (sexta)
+
+Se for necessário prorrogar, por favor avise para quando e o motivo.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--ink-2)">
+        <span style="display: flex; justify-content: space-between"><span>Tipo</span><b style="color: var(--ink); font-weight: 600">Antecipada</b></span>
+        <span style="display: flex; justify-content: space-between"><span>Execução no Make</span><b style="color: var(--ink); font-weight: 600">#4812</b></span>
+      </div>
+    </aside>
+  </div>
+</div>
+
+
+
+
+</body></html>

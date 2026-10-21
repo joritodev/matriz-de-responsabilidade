@@ -1,0 +1,20 @@
+---
+description: Regras de interface e design do app web (apps/web)
+globs: apps/web/**
+alwaysApply: false
+---
+
+# Web e design
+
+- `DESIGN.md` é a fonte de verdade visual. Antes de criar ou mudar uma tela, abra a imagem correspondente em `reference/screens/` e o HTML em `reference/html/`, e copie os valores (tamanhos, raios, espaçamentos, cores) em vez de aproximar.
+- Tailwind v4 com os tokens do `@theme` do DESIGN.md. Nada de cores fora dos tokens.
+- Fonte Onest via `next/font/google`. Não use Inter, Geist nem a fonte padrão de nenhuma biblioteca.
+- Se usar shadcn/ui ou Radix, só como base de acessibilidade (Dialog, Popover, Select): restilize tudo com os tokens. O resultado não pode parecer o tema padrão de nenhuma biblioteca.
+- Ícones só de `@phosphor-icons/react`. Nenhum emoji na interface.
+- Proibido: gradiente, vidro/blur decorativo, sombra em cartão (a única sombra é a do botão flutuante no celular), borda colorida à esquerda em cartões, rótulo pequeno em caixa alta acima de títulos, números grandes de "KPI" no topo.
+- Cor da pasta sempre por variáveis CSS locais (`--f-bg`, `--f-ink`, `--f-solid`, `--f-wash`) a partir de `matrices.color`.
+- Situação do prazo sempre com texto no chip, nunca só cor.
+- Componentes interativos com estados de hover, foco visível, desabilitado e carregando. Carregamento com esqueleto no formato do conteúdo.
+- Toda tela precisa funcionar em 390px sem rolagem horizontal da página (ver tabela Responsivo do DESIGN.md e as imagens 05 e 06).
+- Prorrogação e edição acontecem na própria linha. Modal só para confirmar ação destrutiva (cancelar demanda, arquivar pasta).
+- Textos da interface: os mesmos das imagens de referência quando existirem.
