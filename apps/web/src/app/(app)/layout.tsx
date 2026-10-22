@@ -2,6 +2,7 @@ import { BottomTabBar } from "@/components/BottomTabBar";
 import { Fab } from "@/components/Fab";
 import { MobileHeader } from "@/components/MobileHeader";
 import { NewTaskPanel, NewTaskProvider } from "@/components/NewTaskPanel";
+import { RoleProvider } from "@/components/Role";
 import { ToastProvider } from "@/components/Toast";
 import { TopNav } from "@/components/TopNav";
 import { api } from "@/lib/api";
@@ -18,18 +19,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const initials = emailInitials(me.email);
   return (
     <ToastProvider>
-      <NewTaskProvider>
-        <div className="mx-auto flex min-h-dvh w-full max-w-[1440px] flex-col gap-6 px-4 pb-[120px] md:gap-7 md:px-7 md:pt-5 md:pb-12">
-          <div className="relative">
-            <TopNav initials={initials} email={me.email} />
-            <MobileHeader initials={initials} email={me.email} />
-            <NewTaskPanel today={me.today} />
+      <RoleProvider role={me.role}>
+        <NewTaskProvider>
+          <div className="mx-auto flex min-h-dvh w-full max-w-[1440px] flex-col gap-6 px-4 pb-[120px] md:gap-7 md:px-7 md:pt-5 md:pb-12">
+            <div className="relative">
+              <TopNav initials={initials} email={me.email} />
+              <MobileHeader initials={initials} email={me.email} />
+              <NewTaskPanel today={me.today} />
+            </div>
+            {children}
           </div>
-          {children}
-        </div>
-        <Fab />
-        <BottomTabBar />
-      </NewTaskProvider>
+          <Fab />
+          <BottomTabBar />
+        </NewTaskProvider>
+      </RoleProvider>
     </ToastProvider>
   );
 }

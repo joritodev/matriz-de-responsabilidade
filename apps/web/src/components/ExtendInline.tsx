@@ -15,6 +15,7 @@ import { Button } from "./Button";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { DateInput } from "./DateInput";
 import { Field } from "./Field";
+import { useCanWrite } from "./Role";
 import { useToast } from "./Toast";
 
 function describe(e: HistoryEvent): [string, string] {
@@ -88,6 +89,7 @@ export function ExtendInline({
   onDone: () => void;
 }) {
   const toast = useToast();
+  const canWrite = useCanWrite();
   const [mode, setMode] = useState<"extend" | "correct" | "edit">("extend");
   const [newDue, setNewDue] = useState("");
   const [reason, setReason] = useState("");
@@ -143,6 +145,16 @@ export function ExtendInline({
     });
 
   const version = `${task.dueDate}|${task.taskStatus}|${task.reminders.early}|${task.reminders.due}`;
+
+  if (!canWrite) {
+    return (
+      <div className="expand-enter">
+        <ol className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] leading-[18px] text-ink-2">
+          <TaskHistory taskId={task.id} version={version} />
+        </ol>
+      </div>
+    );
+  }
 
   return (
     <div className="expand-enter">

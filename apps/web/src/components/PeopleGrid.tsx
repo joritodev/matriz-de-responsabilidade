@@ -6,11 +6,13 @@ import { useEffect, useState } from "react";
 import type { Assignee } from "@/lib/api-types";
 import { Button } from "./Button";
 import { PersonCard } from "./PersonCard";
+import { useCanWrite } from "./Role";
 
 const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 export function PeopleGrid({ people, initialPerson }: { people: Assignee[]; initialPerson: string | null }) {
   const router = useRouter();
+  const canWrite = useCanWrite();
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,24 +57,28 @@ export function PeopleGrid({ people, initialPerson }: { people: Assignee[]; init
               className="h-10 w-full rounded-full bg-surface pr-4 pl-[38px] text-[14px] outline-offset-2 placeholder:text-ink-2"
             />
           </label>
-          <Button
-            onClick={() => {
-              setCreating(true);
-              setEditingId(null);
-            }}
-            disabled={creating}
-          >
-            Novo responsável
-          </Button>
+          {canWrite && (
+            <Button
+              onClick={() => {
+                setCreating(true);
+                setEditingId(null);
+              }}
+              disabled={creating}
+            >
+              Novo responsável
+            </Button>
+          )}
         </div>
       </section>
 
       {people.length === 0 && !creating ? (
         <div className="rounded-card border-2 border-dashed border-dash px-6 py-12 text-center">
           <p className="text-[17px] font-semibold">Cadastre quem recebe as cobranças.</p>
-          <Button className="mt-4" onClick={() => setCreating(true)}>
-            Novo responsável
-          </Button>
+          {canWrite && (
+            <Button className="mt-4" onClick={() => setCreating(true)}>
+              Novo responsável
+            </Button>
+          )}
         </div>
       ) : (
         <section aria-label="Pessoas" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(270px,1fr))]">

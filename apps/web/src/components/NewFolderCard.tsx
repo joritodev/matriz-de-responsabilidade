@@ -7,6 +7,7 @@ import { createMatrixAction } from "@/app/(app)/actions";
 import { FOLDER_COLORS, type FolderColor } from "@/lib/api-types";
 import { folderColorLabel, folderTheme, folderVars } from "@/lib/folder-colors";
 import { Button } from "./Button";
+import { useCanWrite } from "./Role";
 import { useToast } from "./Toast";
 
 /** "Nova pasta": cartão tracejado que vira formulário inline com nome e as 8 cores. */
@@ -27,10 +28,13 @@ export function NewFolderCard({
   const input = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const toast = useToast();
+  const canWrite = useCanWrite();
 
   useEffect(() => {
     if (editing) input.current?.focus();
   }, [editing]);
+
+  if (!canWrite) return null;
 
   if (!editing) {
     return (

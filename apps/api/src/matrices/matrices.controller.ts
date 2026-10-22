@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
 import { z } from 'zod';
+import { Roles } from '../auth/supabase-auth.guard';
 import { parseInput, trimmed, uuidParam } from '../common/validation';
 import { FOLDER_COLORS } from '../db/schema';
 import { MatricesService } from './matrices.service';
@@ -22,16 +23,19 @@ export class MatricesController {
   }
 
   @Post()
+  @Roles('admin', 'editor')
   create(@Body() body: unknown) {
     return this.service.create(parseInput(createBody, body));
   }
 
   @Post('reorder')
+  @Roles('admin', 'editor')
   reorder(@Body() body: unknown) {
     return this.service.reorder(parseInput(reorderBody, body).ids);
   }
 
   @Patch(':id')
+  @Roles('admin', 'editor')
   update(@Param('id') id: string, @Body() body: unknown) {
     return this.service.update(parseInput(uuidParam('Pasta inválida.'), id), parseInput(updateBody, body));
   }

@@ -9,6 +9,7 @@ import { Avatar } from "./Avatar";
 import { Button } from "./Button";
 import { DateTile } from "./DateTile";
 import { ExtendInline } from "./ExtendInline";
+import { useCanWrite } from "./Role";
 import { StatusChip } from "./StatusChip";
 import { ReminderTrack } from "./ReminderTrack";
 import { useToast } from "./Toast";
@@ -73,7 +74,8 @@ export function TaskList({
   const [dragId, setDragId] = useState<string | null>(null);
   const [, start] = useTransition();
   const toast = useToast();
-  const canReorder = filter === "open";
+  const canWrite = useCanWrite();
+  const canReorder = filter === "open" && canWrite;
   const isDesktop = useIsDesktop();
 
   useEffect(() => {

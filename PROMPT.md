@@ -257,7 +257,9 @@ As credenciais do provedor de WhatsApp ficam só no Make, nunca na API.
 
 ## 11. Fora do escopo agora
 
-Ler respostas com IA, aprovação de prorrogação pelo chefe, acesso dos responsáveis ao site, tema escuro, notificações push. Deixe o código pronto para crescer (papéis em `members`, campo `approved_by`), mas não construa.
+Ler respostas com IA, aprovação de prorrogação pelo chefe, acesso dos responsáveis ao site, tema escuro, notificações push. Deixe o código pronto para crescer (campo `approved_by`), mas não construa.
+
+**Papéis (aplicado):** `viewer` só lê — o servidor responde 403 "Seu acesso é só de leitura." em todo `POST`, `PATCH` e `DELETE` do site (decorador `@Roles('admin','editor')`), e a interface esconde os botões de escrita para `viewer`.
 
 ## 12. Fases
 

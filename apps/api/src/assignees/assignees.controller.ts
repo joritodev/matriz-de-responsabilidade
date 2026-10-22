@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post } from '@nestjs/common';
 import { z } from 'zod';
+import { Roles } from '../auth/supabase-auth.guard';
 import { parseInput, trimmed, uuidParam } from '../common/validation';
 import { normalizeWhatsapp } from '../reminders/rules/schedule';
 import { AssigneesService } from './assignees.service';
@@ -52,11 +53,13 @@ export class AssigneesController {
   }
 
   @Post()
+  @Roles('admin', 'editor')
   create(@Body() body: unknown) {
     return this.service.create(parseInput(createBody, body));
   }
 
   @Patch(':id')
+  @Roles('admin', 'editor')
   update(@Param('id') id: string, @Body() body: unknown) {
     return this.service.update(parseInput(uuidParam('Responsável inválido.'), id), parseInput(updateBody, body));
   }

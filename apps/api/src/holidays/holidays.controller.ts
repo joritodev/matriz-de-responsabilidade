@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { Roles } from '../auth/supabase-auth.guard';
 import { conflict, notFound } from '../common/errors';
 import { isoDate, parseInput, trimmed } from '../common/validation';
 import { DB, pgErrorCode, type Db } from '../db/client';
@@ -22,6 +23,7 @@ export class HolidaysController {
   }
 
   @Post()
+  @Roles('admin', 'editor')
   async create(@Body() body: unknown) {
     const input = parseInput(createBody, body);
     try {
@@ -34,6 +36,7 @@ export class HolidaysController {
   }
 
   @Delete(':date')
+  @Roles('admin', 'editor')
   @HttpCode(200)
   async remove(@Param('date') date: string) {
     const d = parseInput(isoDate('Data inválida.'), date);
