@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 import { MakeKeyGuard } from '../auth/make-key.guard';
-import { MakeRoute } from '../auth/supabase-auth.guard';
+import { MakeRoute, Roles } from '../auth/supabase-auth.guard';
 import { isoDate, parseInput, uuidParam } from '../common/validation';
 import { RemindersService } from './reminders.service';
 
@@ -9,12 +9,12 @@ const listQuery = z.object({
   from: isoDate('Data inicial inválida.').optional(),
   to: isoDate('Data final inválida.').optional(),
   assigneeId: uuidParam('Responsável inválido.').optional(),
-  status: z.enum(['queued', 'sent', 'failed'], { error: 'Status inválido.' }).optional(),
+  status: z.enum(['queued', 'taken', 'sent', 'failed'], { error: 'Status inválido.' }).optional(),
 });
 
 const resultBody = z
   .object({
-    status: z.enum(['sent', 'failed'], { error: 'Use status "sent" ou "failed".' }),
+    status: z.enum(['taken', 'sent', 'failed'], { error: 'Use status "taken", "sent" ou "failed".' }),
     providerMessageId: z.string().trim().max(500).optional(),
     error: z.string().trim().max(2000).optional(),
     makeExecutionId: z.union([z.string(), z.number()]).transform(String).optional(),
@@ -51,5 +51,12 @@ export class RemindersController {
   @UseGuards(MakeKeyGuard)
   result(@Param('id') id: string, @Body() body: unknown) {
     return this.reminders.recordResult(parseInput(uuidParam('Cobrança inválida.'), id), parseInput(resultBody, body));
+  }
+
+  @Post('batches/:id/requeue')
+  @Roles('admin', 'editor')
+  @HttpCode(200)
+  requeue(@Param('id') id: string) {
+    return this.reminders.requeue(parseInput(uuidParam('Cobrança inválida.'), id));
   }
 }

@@ -7,6 +7,7 @@ import { ddmm, parseDateInput } from "@/lib/dates";
 import { Button } from "./Button";
 import { DateInput } from "./DateInput";
 import { Field } from "./Field";
+import { useCanWrite } from "./Role";
 import { useToast } from "./Toast";
 
 /** Faixa de lançamento rápido dentro da pasta. Enter lança e devolve o foco ao título. */
@@ -31,6 +32,7 @@ export function QuickAddForm({
   const [pending, start] = useTransition();
   const titleRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+  const canWrite = useCanWrite();
   const active = assignees.filter((a) => a.isActive);
 
   const submit = () => {
@@ -57,6 +59,8 @@ export function QuickAddForm({
       titleRef.current?.focus();
     });
   };
+
+  if (!canWrite) return null;
 
   return (
     <form

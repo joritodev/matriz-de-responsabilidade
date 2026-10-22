@@ -44,6 +44,7 @@ const batchLabels: Record<BatchDisplayStatus, [string, Tone]> = {
   sent: ["enviada", "ok"],
   failed: ["falhou", "late"],
   queued: ["na fila", "ok"],
+  taken: ["recebida", "soon"],
   no_confirmation: ["sem confirmação", "ok"],
 };
 

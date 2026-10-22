@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { reminderBatchItems } from '../src/db/schema';
+import { reminderBatchItems, reminderBatches, tasks } from '../src/db/schema';
 import { AUTH, MAKE, startTestApp, type TestApp } from './helpers';
 
 const RAFAEL_TASK = '30000000-0000-0000-0000-000000000302';
@@ -178,5 +178,140 @@ describe('acesso e validação', () => {
     await t.http().post(`/v1/matrices/${m}/tasks/reorder`).set(AUTH).send({ taskIds: ids }).expect(200);
     const res = await t.http().get('/v1/matrices/geral/tasks').set(AUTH).expect(200);
     expect(res.body.tasks.map((r: { id: string }) => r.id)).toEqual(ids);
+  });
+
+  it('recusa ciclo no pré-requisito', async () => {
+    const m = '10000000-0000-0000-0000-000000000002';
+    // seed: 202 depende de 201 e 204 depende de 203.
+    await t
+      .http()
+      .patch('/v1/tasks/30000000-0000-0000-0000-000000000201')
+      .set(AUTH)
+      .send({ prerequisiteTaskId: '30000000-0000-0000-0000-000000000204' })
+      .expect(200);
+    const res = await t
+      .http()
+      .patch('/v1/tasks/30000000-0000-0000-0000-000000000203')
+      .set(AUTH)
+      .send({ prerequisiteTaskId: '30000000-0000-0000-0000-000000000201' })
+      .expect(400);
+    expect(res.body.code).toBe('prerequisite_cycle');
+    expect(res.body.message).toContain('Isso criaria um ciclo');
+  });
+
+  it('recusa cadeia de pré-requisito com mais de 50 níveis', async () => {
+    const matrixId = '10000000-0000-0000-0000-000000000002';
+    const chain: string[] = [];
+    for (let i = 0; i < 52; i++) {
+      const id = `50000000-0000-0000-0000-00000000${String(i).padStart(4, '0')}`;
+      chain.push(id);
+      await t.handle.db.insert(tasks).values({
+        id,
+        matrixId,
+        position: 100 + i,
+        assigneeId: '20000000-0000-0000-0000-000000000001',
+        title: `Nível ${i}`,
+        dueDate: '2026-10-25',
+        prerequisiteTaskId: i > 0 ? chain[i - 1] : null,
+      });
+    }
+    const res = await t
+      .http()
+      .post(`/v1/matrices/${matrixId}/tasks`)
+      .set(AUTH)
+      .send({ title: 'Demanda nova', assigneeId: '20000000-0000-0000-0000-000000000001', dueDate: '2026-10-25', prerequisiteTaskId: chain[51] })
+      .expect(400);
+    expect(res.body.code).toBe('prerequisite_chain_too_long');
+  });
+});
+
+describe('lotes sem confirmação do Make (D3)', () => {
+  let t: TestApp;
+  beforeEach(async () => {
+    t = await startTestApp();
+  });
+  afterEach(async () => {
+    await t.close();
+  });
+
+  it('dispatch do dia seguinte expira o queued de ontem e a cobrança sai de novo', async () => {
+    t.setToday('2026-10-21');
+    const first = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    expect(first.body.batches).toHaveLength(2);
+
+    t.setToday('2026-10-22');
+    const next = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    expect(next.body.batches.some((b: { assigneeName: string }) => b.assigneeName === 'Rafael Pinheiro')).toBe(true);
+
+    const old = await t.http().get('/v1/reminders/batches?from=2026-10-21&to=2026-10-21').set(AUTH).expect(200);
+    expect(old.body.days[0].batches).toHaveLength(2);
+    for (const b of old.body.days[0].batches) {
+      expect(b).toMatchObject({ status: 'failed', error: 'Sem confirmação do Make.' });
+    }
+  });
+
+  it('/result atrasado de lote expirado recebe 409', async () => {
+    t.setToday('2026-10-21');
+    const { body } = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    const id = body.batches[0].id;
+    t.setToday('2026-10-22');
+    await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    const res = await t.http().post(`/v1/reminders/batches/${id}/result`).set(MAKE).send({ status: 'sent' }).expect(409);
+    expect(res.body.code).toBe('batch_already_finalized');
+  });
+
+  it('taken: "recebi" mantém a reserva, aceita sent depois e finaliza', async () => {
+    t.setToday('2026-10-21');
+    const { body } = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    const matheus = body.batches.find((b: { assigneeName: string }) => b.assigneeName === 'Matheus Araújo');
+
+    const taken = await t.http().post(`/v1/reminders/batches/${matheus.id}/result`).set(MAKE).send({ status: 'taken', makeExecutionId: 1 }).expect(200);
+    expect(taken.body).toMatchObject({ status: 'taken', finishedAt: null });
+    const again = await t.http().post(`/v1/reminders/batches/${matheus.id}/result`).set(MAKE).send({ status: 'taken' }).expect(200);
+    expect(again.body).toMatchObject({ status: 'taken', finishedAt: null });
+
+    t.setToday('2026-10-22');
+    const next = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    expect(next.body.batches.some((b: { assigneeName: string }) => b.assigneeName === 'Matheus Araújo')).toBe(false);
+
+    const sent = await t.http().post(`/v1/reminders/batches/${matheus.id}/result`).set(MAKE).send({ status: 'sent', providerMessageId: 'wa-9' }).expect(200);
+    expect(sent.body).toMatchObject({ status: 'sent' });
+    expect(sent.body.finishedAt).not.toBeNull();
+    const late = await t.http().post(`/v1/reminders/batches/${matheus.id}/result`).set(MAKE).send({ status: 'failed', error: 'x' }).expect(409);
+    expect(late.body.code).toBe('batch_already_finalized');
+  });
+
+  it('requeue: taken de dia anterior libera a reserva e a cobrança volta', async () => {
+    t.setToday('2026-10-21');
+    const { body } = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    const rafael = body.batches.find((b: { channel: string }) => b.channel === 'email');
+    const matheus = body.batches.find((b: { channel: string }) => b.channel === 'whatsapp');
+
+    await t.http().post(`/v1/reminders/batches/${rafael.id}/result`).set(MAKE).send({ status: 'taken' }).expect(200);
+    const sameDay = await t.http().post(`/v1/reminders/batches/${rafael.id}/requeue`).set(AUTH).expect(409);
+    expect(sameDay.body.code).toBe('batch_not_stale');
+    const notTaken = await t.http().post(`/v1/reminders/batches/${matheus.id}/requeue`).set(AUTH).expect(409);
+    expect(notTaken.body.code).toBe('batch_not_requeueable');
+
+    t.setToday('2026-10-22');
+    const requeued = await t.http().post(`/v1/reminders/batches/${rafael.id}/requeue`).set(AUTH).expect(200);
+    expect(requeued.body).toMatchObject({ status: 'failed' });
+
+    const again = await t.http().post(`/v1/reminders/batches/${rafael.id}/requeue`).set(AUTH).expect(409);
+    expect(again.body.code).toBe('batch_not_requeueable');
+
+    const next = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    expect(next.body.batches.some((b: { assigneeName: string }) => b.assigneeName === 'Rafael Pinheiro')).toBe(true);
+
+    const list = await t.http().get('/v1/reminders/batches?from=2026-10-21&to=2026-10-21').set(AUTH).expect(200);
+    const oldRafael = list.body.days[0].batches.find((b: { channel: string }) => b.channel === 'email');
+    expect(oldRafael).toMatchObject({ status: 'failed', error: 'Reenviado manualmente.' });
+  });
+
+  it('requeue sem login é recusado e viewer recebe 403', async () => {
+    t.setToday('2026-10-21');
+    const { body } = await t.http().post('/v1/reminders/dispatch').set(MAKE).expect(200);
+    const id = body.batches[0].id;
+    await t.http().post(`/v1/reminders/batches/${id}/requeue`).expect(401);
   });
 });

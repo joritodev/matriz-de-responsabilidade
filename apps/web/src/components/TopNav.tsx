@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { logoutAction } from "@/app/(auth)/login/actions";
 import { Brand } from "./Brand";
 import { useNewTaskPanel } from "./NewTaskPanel";
+import { useCanWrite } from "./Role";
 import { SearchBox } from "./SearchBox";
 
 export const NAV = [
@@ -40,6 +41,7 @@ export function UserMenu({ initials, email }: { initials: string; email: string 
 export function TopNav({ initials, email }: { initials: string; email: string }) {
   const pathname = usePathname();
   const { open, setOpen } = useNewTaskPanel();
+  const canWrite = useCanWrite();
   return (
     <header className="relative hidden flex-wrap items-center gap-x-5 gap-y-3 md:flex">
       <Brand href="/" />
@@ -62,15 +64,17 @@ export function TopNav({ initials, email }: { initials: string; email: string })
       </nav>
       <div className="ml-auto flex items-center gap-[10px]">
         <SearchBox className="w-[260px] max-w-full" />
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-haspopup="dialog"
-          onClick={() => setOpen(!open)}
-          className="pressable inline-flex h-10 items-center rounded-full bg-ink px-[18px] text-[14px] font-semibold text-white hover:bg-[#2A2D35]"
-        >
-          Nova demanda
-        </button>
+        {canWrite && (
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-haspopup="dialog"
+            onClick={() => setOpen(!open)}
+            className="pressable inline-flex h-10 items-center rounded-full bg-ink px-[18px] text-[14px] font-semibold text-white hover:bg-[#2A2D35]"
+          >
+            Nova demanda
+          </button>
+        )}
         <UserMenu initials={initials} email={email} />
       </div>
     </header>

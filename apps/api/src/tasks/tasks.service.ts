@@ -140,7 +140,8 @@ export class TasksService {
     const today = this.clock.today();
     if (input.dueDate < today) throw badRequest('O prazo precisa ser hoje ou depois.', 'due_date_in_past');
     return this.db.transaction(async (tx) => {
-      const [m] = await tx.select().from(matrices).where(eq(matrices.id, matrixId)).limit(1);
+      // Trava a linha da pasta: duas criações em paralelo não leem o mesmo max(position).
+      const [m] = await tx.select().from(matrices).where(eq(matrices.id, matrixId)).for('update').limit(1);
       if (!m) throw notFound('Pasta não encontrada.', 'matrix_not_found');
       if (m.isArchived) throw badRequest('Esta pasta está arquivada.', 'matrix_archived');
       await this.assertAssignee(tx, input.assigneeId);
@@ -175,7 +176,7 @@ export class TasksService {
       if (input.assigneeId) await this.assertAssignee(tx, input.assigneeId);
       if (input.prerequisiteTaskId) {
         if (input.prerequisiteTaskId === id) throw badRequest('Uma demanda não pode depender dela mesma.', 'prerequisite_self');
-        await this.assertPrerequisite(tx, t.matrixId, input.prerequisiteTaskId);
+        await this.assertPrerequisite(tx, t.matrixId, input.prerequisiteTaskId, id);
       }
       const patch: Partial<Task> = {};
       if (input.title !== undefined) patch.title = input.title;
@@ -277,7 +278,7 @@ export class TasksService {
     type Event =
       | { type: 'created'; at: string; dueDate: string }
       | { type: 'due_change'; at: string; kind: 'extension' | 'correction'; previousDueDate: string; newDueDate: string; reason: string | null; approvedBy: string | null }
-      | { type: 'reminder'; at: string; kind: 'early' | 'due'; channel: 'whatsapp' | 'email'; status: 'queued' | 'sent' | 'failed'; dueDateSnapshot: string; error: string | null }
+      | { type: 'reminder'; at: string; kind: 'early' | 'due'; channel: 'whatsapp' | 'email'; status: 'queued' | 'taken' | 'sent' | 'failed'; dueDateSnapshot: string; error: string | null }
       | { type: 'completed'; at: string };
     const events: Event[] = [
       { type: 'created', at: t.createdAt.toISOString(), dueDate: changes[0]?.previousDueDate ?? t.dueDate },
@@ -357,8 +358,23 @@ export class TasksService {
     if (!a.isActive) throw badRequest(`${a.fullName} está desativada. Reative a pessoa ou escolha outra.`, 'assignee_inactive');
   }
 
-  private async assertPrerequisite(tx: Tx, matrixId: string, taskId: string) {
-    const [p] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  /**
+   * O pré-requisito precisa ser da mesma pasta. Sobe a cadeia dele: se encontrar
+   * a demanda que está sendo editada, é ciclo; a cadeia também é limitada a 50 níveis.
+   */
+  private async assertPrerequisite(tx: Tx, matrixId: string, taskId: string, updatingId?: string) {
+    const [p] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).for('update').limit(1);
     if (!p || p.matrixId !== matrixId) throw badRequest('O pré-requisito precisa ser uma demanda desta pasta.', 'prerequisite_other_matrix');
+    let current = p;
+    for (let level = 0; level < 50; level++) {
+      if (!current.prerequisiteTaskId) return;
+      const [next] = await tx.select().from(tasks).where(eq(tasks.id, current.prerequisiteTaskId)).for('update').limit(1);
+      if (!next) return;
+      if (updatingId && next.id === updatingId) {
+        throw badRequest(`Isso criaria um ciclo: ${next.title} já depende desta demanda.`, 'prerequisite_cycle');
+      }
+      current = next;
+    }
+    throw badRequest('A cadeia de pré-requisitos é longa demais (máximo de 50).', 'prerequisite_chain_too_long');
   }
 }

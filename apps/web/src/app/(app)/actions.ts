@@ -106,3 +106,7 @@ export async function createAssigneeAction(input: AssigneeInput & { fullName: st
 export async function updateAssigneeAction(id: string, input: AssigneeInput) {
   return run(() => api<{ id: string }>(`/assignees/${id}`, { method: "PATCH", body: input }), ["/responsaveis", "/", "/pastas/[slug]"]);
 }
+
+export async function requeueBatchAction(id: string) {
+  return run(() => api<{ id: string; status: string }>(`/reminders/batches/${id}/requeue`, { method: "POST" }), false);
+}

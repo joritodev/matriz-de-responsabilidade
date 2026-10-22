@@ -18,6 +18,13 @@ export const IS_MAKE_ROUTE = 'prazo:isMakeRoute';
 /** Marca rotas chamadas pelo Make: usam `x-api-key` em vez do login. */
 export const MakeRoute = () => SetMetadata(IS_MAKE_ROUTE, true);
 
+export const REQUIRED_ROLES = 'prazo:requiredRoles';
+/**
+ * Exige um papel para a rota: `@Roles('admin','editor')` em todo
+ * `POST`/`PATCH`/`DELETE` do site. `viewer` recebe 403 "Seu acesso é só de leitura.".
+ */
+export const Roles = (...roles: Array<'admin' | 'editor'>) => SetMetadata(REQUIRED_ROLES, roles);
+
 export const DEV_TOKEN_PREFIX = 'dev:';
 const MEMBER_CACHE_MS = 60_000;
 
@@ -52,10 +59,16 @@ export class SupabaseAuthGuard implements CanActivate {
     const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
     if (!token) throw new ApiError(401, 'Faça login para continuar.', 'unauthorized');
 
+    const requiredRoles = this.reflector.getAllAndOverride<Array<'admin' | 'editor'>>(
+      REQUIRED_ROLES,
+      [ctx.getHandler(), ctx.getClass()],
+    );
+
     const hit = this.cache.get(token);
     if (hit) {
       if (hit.expiresAt > Date.now()) {
         req.user = hit.user;
+        this.assertRole(req.user, requiredRoles);
         return true;
       }
       this.cache.delete(token);
@@ -71,7 +84,14 @@ export class SupabaseAuthGuard implements CanActivate {
     for (const [k, v] of this.cache) if (v.expiresAt <= now) this.cache.delete(k);
     this.cache.set(token, { user, expiresAt: now + MEMBER_CACHE_MS });
     req.user = user;
+    this.assertRole(user, requiredRoles);
     return true;
+  }
+
+  private assertRole(user: AuthUser, requiredRoles: Array<'admin' | 'editor'> | undefined): void {
+    if (requiredRoles?.length && !requiredRoles.includes(user.role as 'admin' | 'editor')) {
+      throw new ApiError(403, 'Seu acesso é só de leitura.', 'read_only');
+    }
   }
 
   private async emailFromToken(token: string): Promise<string | null> {

@@ -2,10 +2,13 @@
 
 import { PlusIcon } from "@phosphor-icons/react";
 import { useNewTaskPanel } from "./NewTaskPanel";
+import { useCanWrite } from "./Role";
 
 /** Celular: botão flutuante de nova demanda. Única sombra do app. */
 export function Fab() {
   const { setOpen } = useNewTaskPanel();
+  const canWrite = useCanWrite();
+  if (!canWrite) return null;
   return (
     <button
       type="button"

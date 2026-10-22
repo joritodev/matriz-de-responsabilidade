@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { z } from 'zod';
-import type { AuthedRequest } from '../auth/supabase-auth.guard';
+import { Roles, type AuthedRequest } from '../auth/supabase-auth.guard';
 import { badRequest } from '../common/errors';
 import { isoDate, parseInput, trimmed, uuidParam } from '../common/validation';
 import { TasksService } from './tasks.service';
@@ -53,17 +53,20 @@ export class TasksController {
   }
 
   @Post('matrices/:id/tasks')
+  @Roles('admin', 'editor')
   create(@Param('id') matrixId: string, @Body() body: unknown) {
     return this.service.create(parseInput(uuidParam('Pasta inválida.'), matrixId), parseInput(createBody, body));
   }
 
   @Post('matrices/:id/tasks/reorder')
+  @Roles('admin', 'editor')
   @HttpCode(200)
   reorder(@Param('id') matrixId: string, @Body() body: unknown) {
     return this.service.reorder(parseInput(uuidParam('Pasta inválida.'), matrixId), parseInput(reorderBody, body).taskIds);
   }
 
   @Patch('tasks/:id')
+  @Roles('admin', 'editor')
   update(@Param('id') taskId: string, @Body() body: unknown) {
     if (body && typeof body === 'object' && 'dueDate' in body) {
       throw badRequest('O prazo só muda por prorrogação ou correção.', 'due_date_not_editable');
@@ -72,30 +75,35 @@ export class TasksController {
   }
 
   @Post('tasks/:id/extend')
+  @Roles('admin', 'editor')
   @HttpCode(200)
   extend(@Param('id') taskId: string, @Body() body: unknown, @Req() req: AuthedRequest) {
     return this.service.changeDueDate(id(taskId), 'extension', parseInput(extendBody, body), req.user!.email);
   }
 
   @Post('tasks/:id/correct-due-date')
+  @Roles('admin', 'editor')
   @HttpCode(200)
   correct(@Param('id') taskId: string, @Body() body: unknown, @Req() req: AuthedRequest) {
     return this.service.changeDueDate(id(taskId), 'correction', parseInput(correctBody, body), req.user!.email);
   }
 
   @Post('tasks/:id/complete')
+  @Roles('admin', 'editor')
   @HttpCode(200)
   complete(@Param('id') taskId: string) {
     return this.service.setStatus(id(taskId), 'complete');
   }
 
   @Post('tasks/:id/reopen')
+  @Roles('admin', 'editor')
   @HttpCode(200)
   reopen(@Param('id') taskId: string) {
     return this.service.setStatus(id(taskId), 'reopen');
   }
 
   @Post('tasks/:id/cancel')
+  @Roles('admin', 'editor')
   @HttpCode(200)
   cancel(@Param('id') taskId: string) {
     return this.service.setStatus(id(taskId), 'cancel');

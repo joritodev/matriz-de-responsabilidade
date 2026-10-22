@@ -11,6 +11,7 @@ import { Button } from "./Button";
 import { ChannelSegmented } from "./ChannelSegmented";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Field } from "./Field";
+import { useCanWrite } from "./Role";
 import { StatusChip } from "./StatusChip";
 import { useToast } from "./Toast";
 
@@ -176,6 +177,7 @@ export function PersonCard({
   onDone: (createdId?: string) => void;
 }) {
   const toast = useToast();
+  const canWrite = useCanWrite();
   const [channel, setChannel] = useState<ChannelPreference>(person?.reminderChannel ?? "whatsapp");
   const [channelError, setChannelError] = useState<string | null>(null);
   const [saving, start] = useTransition();
@@ -212,15 +214,21 @@ export function PersonCard({
       <div className="flex items-start gap-3">
         <Avatar initials={person.initials} color={person.color} size="xl" />
         <div className="min-w-0 flex-1 pt-[6px]">
-          <button
-            type="button"
-            id={`pessoa-nome-${person.id}`}
-            onClick={onEdit}
-            className="block text-left text-[16px] leading-[20px] font-semibold hover:underline"
-            aria-label={`${person.fullName}, editar`}
-          >
-            {person.fullName}
-          </button>
+          {canWrite ? (
+            <button
+              type="button"
+              id={`pessoa-nome-${person.id}`}
+              onClick={onEdit}
+              className="block text-left text-[16px] leading-[20px] font-semibold hover:underline"
+              aria-label={`${person.fullName}, editar`}
+            >
+              {person.fullName}
+            </button>
+          ) : (
+            <p id={`pessoa-nome-${person.id}`} className="text-[16px] leading-[20px] font-semibold">
+              {person.fullName}
+            </p>
+          )}
           <p className="mt-[2px] text-[13px] text-ink-2">{person.isActive ? openText(person.openCount) : "desativado"}</p>
         </div>
         {person.nextDue && person.isActive && (
@@ -232,11 +240,13 @@ export function PersonCard({
       <ContactLines a={person} />
       <div className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-3">
         {person.isActive ? (
-          <ChannelSegmented value={channel} onChange={changeChannel} label={`Canal de cobrança de ${person.fullName}`} disabled={saving} />
+          <ChannelSegmented value={channel} onChange={changeChannel} label={`Canal de cobrança de ${person.fullName}`} disabled={saving || !canWrite} />
         ) : (
-          <Button variant="secondary" size="row" onClick={onEdit}>
-            Reativar
-          </Button>
+          canWrite && (
+            <Button variant="secondary" size="row" onClick={onEdit}>
+              Reativar
+            </Button>
+          )
         )}
         <span className="flex gap-1" aria-label={person.folderColors.length ? `Pastas: ${person.folderColors.map((c) => folderColorLabel[c]).join(", ")}` : undefined}>
           {person.folderColors.map((c) => (

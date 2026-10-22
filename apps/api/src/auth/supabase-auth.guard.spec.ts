@@ -3,7 +3,7 @@ import type { Reflector } from '@nestjs/core';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../common/errors';
 import type { Db } from '../db/client';
-import { SupabaseAuthGuard } from './supabase-auth.guard';
+import { SupabaseAuthGuard, REQUIRED_ROLES } from './supabase-auth.guard';
 
 const MEMBRO = 'pessoa@prazo.local';
 
@@ -35,6 +35,9 @@ const ctxDe = (req: unknown): ExecutionContext =>
 
 const reflectorComum = { getAllAndOverride: () => undefined } as unknown as Reflector;
 const reflectorMake = { getAllAndOverride: () => true } as unknown as Reflector;
+const reflectorRoles = {
+  getAllAndOverride: (key: string) => (key === REQUIRED_ROLES ? (['admin', 'editor'] as Array<'admin' | 'editor'>) : undefined),
+} as unknown as Reflector;
 
 const erroDe = (p: Promise<unknown>) => p.then(() => null, (e: unknown) => e);
 
@@ -140,5 +143,25 @@ describe('cache do guard Supabase', () => {
     const guard = new SupabaseAuthGuard(db, reflectorMake);
     expect(await guard.canActivate(ctxDe(reqCom()))).toBe(true);
     expect(consultas()).toBe(0);
+  });
+
+  it('viewer numa rota com @Roles recebe 403 read_only, mesmo vindo do cache', async () => {
+    const { db } = dbComMembros([{ email: MEMBRO, role: 'viewer' }]);
+    const guard = new SupabaseAuthGuard(db, reflectorRoles);
+    const req = reqCom(`dev:${MEMBRO}`);
+    const primeira = await erroDe(guard.canActivate(ctxDe(req)));
+    expect(primeira).toBeInstanceOf(ApiError);
+    expect((primeira as ApiError).getStatus()).toBe(403);
+    expect((primeira as ApiError).getResponse()).toMatchObject({ code: 'read_only', message: 'Seu acesso é só de leitura.' });
+    const segunda = await erroDe(guard.canActivate(ctxDe(req)));
+    expect((segunda as ApiError).getResponse()).toMatchObject({ code: 'read_only' });
+  });
+
+  it('admin e editor passam pelo @Roles', async () => {
+    for (const role of ['admin', 'editor'] as const) {
+      const { db } = dbComMembros([{ email: MEMBRO, role }]);
+      const guard = new SupabaseAuthGuard(db, reflectorRoles);
+      expect(await guard.canActivate(ctxDe(reqCom(`dev:${MEMBRO}`)))).toBe(true);
+    }
   });
 });
