@@ -363,12 +363,12 @@ export class TasksService {
    * a demanda que está sendo editada, é ciclo; a cadeia também é limitada a 50 níveis.
    */
   private async assertPrerequisite(tx: Tx, matrixId: string, taskId: string, updatingId?: string) {
-    const [p] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    const [p] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).for('update').limit(1);
     if (!p || p.matrixId !== matrixId) throw badRequest('O pré-requisito precisa ser uma demanda desta pasta.', 'prerequisite_other_matrix');
     let current = p;
     for (let level = 0; level < 50; level++) {
       if (!current.prerequisiteTaskId) return;
-      const [next] = await tx.select().from(tasks).where(eq(tasks.id, current.prerequisiteTaskId)).limit(1);
+      const [next] = await tx.select().from(tasks).where(eq(tasks.id, current.prerequisiteTaskId)).for('update').limit(1);
       if (!next) return;
       if (updatingId && next.id === updatingId) {
         throw badRequest(`Isso criaria um ciclo: ${next.title} já depende desta demanda.`, 'prerequisite_cycle');

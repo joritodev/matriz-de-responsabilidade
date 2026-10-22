@@ -29,6 +29,8 @@ async function applySqlToDatabase(url: string) {
       await client.unsafe(readFileSync(join(dir, file), 'utf8'));
     }
     await client.unsafe(readFileSync(join(process.cwd(), '../../supabase/seed.sql'), 'utf8'));
+    const devMember = (process.env.DEV_MEMBER_EMAIL ?? 'supervisor@prazo.local').toLowerCase();
+    await client.unsafe('insert into public.members (email, role) values ($1, $2) on conflict do nothing', [devMember, 'admin']);
   } finally {
     await client.end();
   }

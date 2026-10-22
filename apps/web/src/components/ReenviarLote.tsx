@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { requeueBatchAction } from "@/app/(app)/actions";
 import { Button } from "./Button";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { useCanWrite } from "./Role";
 import { useToast } from "./Toast";
 
 /** Lote "recebida pelo Make" de dia anterior sem confirmação: libera a reserva para a próxima cobrança. */
@@ -14,6 +15,7 @@ export function ReenviarLote({ id, firstName }: { id: string; firstName: string 
   const [pending, start] = useTransition();
   const toast = useToast();
   const router = useRouter();
+  const canWrite = useCanWrite();
 
   const resend = () =>
     start(async () => {
@@ -24,6 +26,8 @@ export function ReenviarLote({ id, firstName }: { id: string; firstName: string 
       toast(`Cobrança de ${firstName} liberada: sai de novo no próximo dia útil.`);
       router.refresh();
     });
+
+  if (!canWrite) return null;
 
   return (
     <>
