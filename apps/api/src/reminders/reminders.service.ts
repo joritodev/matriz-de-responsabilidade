@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { conflict, notFound } from '../common/errors';
-import { loadCalendar, loadSnapshot, reminderInputs, type Snapshot } from '../common/snapshot';
+import { itemsDueOnOrBefore, loadCalendar, loadSnapshot, reminderInputs, type Snapshot } from '../common/snapshot';
 import { personRef, primaryFolderColor } from '../common/views';
 import { DB, pgErrorCode, type Db } from '../db/client';
 import { reminderBatchItems, reminderBatches, tasks, matrices, type ReminderBatch } from '../db/schema';
@@ -144,8 +144,9 @@ export class RemindersService {
   /** O que sairia em `date` (padrão: próximo dia útil), sem reservar nada. */
   async preview(date?: IsoDate) {
     const today = this.clock.today();
-    const snap = await loadSnapshot(this.db);
-    const target = date ?? nextBusinessDay(today, snap.calendar);
+    const calendar = await loadCalendar(this.db);
+    const target = date ?? nextBusinessDay(today, calendar);
+    const snap = await loadSnapshot(this.db, { items: { dueOnOrBefore: itemsDueOnOrBefore(target) } });
     return this.previewFromSnapshot(snap, target, today);
   }
 
@@ -209,7 +210,10 @@ export class RemindersService {
     return { date: p.date, count: p.batches.length, summary: joinPt(parts) };
   }
 
-  async listBatches(filter: { from?: IsoDate; to?: IsoDate; assigneeId?: string; status?: 'queued' | 'sent' | 'failed' }) {
+  async listBatches(
+    filter: { from?: IsoDate; to?: IsoDate; assigneeId?: string; status?: 'queued' | 'sent' | 'failed' },
+    snapshot?: Snapshot,
+  ) {
     const today = this.clock.today();
     const to = filter.to ?? today;
     const from = filter.from ?? addDays(to, -30);
@@ -218,7 +222,7 @@ export class RemindersService {
     if (filter.status) conds.push(eq(reminderBatches.status, filter.status));
 
     const [snap, batches] = await Promise.all([
-      loadSnapshot(this.db, { includeArchived: true }),
+      snapshot ?? loadSnapshot(this.db, { includeArchived: true, items: 'none' }),
       this.db
         .select()
         .from(reminderBatches)

@@ -5,7 +5,7 @@ import { NewTaskPanel, NewTaskProvider } from "@/components/NewTaskPanel";
 import { ToastProvider } from "@/components/Toast";
 import { TopNav } from "@/components/TopNav";
 import { api } from "@/lib/api";
-import type { Assignee, FolderSummary, Me } from "@/lib/api-types";
+import type { Me } from "@/lib/api-types";
 
 function emailInitials(email: string) {
   const local = email.split("@")[0] ?? "";
@@ -14,11 +14,7 @@ function emailInitials(email: string) {
 }
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [me, folders, assignees] = await Promise.all([
-    api<Me>("/me"),
-    api<FolderSummary[]>("/matrices"),
-    api<Assignee[]>("/assignees"),
-  ]);
+  const me = await api<Me>("/me");
   const initials = emailInitials(me.email);
   return (
     <ToastProvider>
@@ -27,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="relative">
             <TopNav initials={initials} email={me.email} />
             <MobileHeader initials={initials} email={me.email} />
-            <NewTaskPanel folders={folders} assignees={assignees} today={me.today} />
+            <NewTaskPanel today={me.today} />
           </div>
           {children}
         </div>

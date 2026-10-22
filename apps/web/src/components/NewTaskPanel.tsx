@@ -3,7 +3,7 @@
 import { XIcon } from "@phosphor-icons/react";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState, useTransition } from "react";
-import { createTaskAction, prerequisiteOptionsAction } from "@/app/(app)/actions";
+import { createTaskAction, newTaskPanelDataAction, prerequisiteOptionsAction } from "@/app/(app)/actions";
 import type { Assignee, FolderSummary, IsoDate } from "@/lib/api-types";
 import { ddmm, parseDateInput } from "@/lib/dates";
 import { folderVars } from "@/lib/folder-colors";
@@ -21,7 +21,7 @@ export function NewTaskProvider({ children }: { children: React.ReactNode }) {
 }
 
 /** "Nova demanda": popover ancorado no botão no desktop, folha que sobe de baixo no celular. */
-export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSummary[]; assignees: Assignee[]; today: IsoDate }) {
+export function NewTaskPanel({ today }: { today: IsoDate }) {
   const { open, setOpen } = useNewTaskPanel();
   const pathname = usePathname();
   const router = useRouter();
@@ -39,16 +39,43 @@ export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSum
   const panelRef = useRef<HTMLDivElement>(null);
 
   const [wasOpen, setWasOpen] = useState(open);
+  const [data, setData] = useState<{ folders: FolderSummary[]; assignees: Assignee[] } | null>(null);
+  const folders = data?.folders ?? [];
+  const assignees = data?.assignees ?? [];
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
       const fromPath = folders.find((f) => f.slug === currentSlug);
       const nextId = fromPath?.id ?? (folderId || folders[0]?.id || "");
-      if (nextId !== folderId) setPrereq("");
-      setFolderId(nextId);
+      if (nextId !== folderId) {
+        setFolderId(nextId);
+        setPrereq("");
+      }
       setErrors({});
     }
   }
+
+  useEffect(() => {
+    if (!open || data) return;
+    let alive = true;
+    void newTaskPanelDataAction().then((r) => {
+      if (!alive) return;
+      if (!r.ok) {
+        setErrors((e) => ({ ...e, form: r.message }));
+        return;
+      }
+      setData(r.data);
+      const fromPath = r.data.folders.find((f) => f.slug === currentSlug);
+      const nextId = fromPath?.id ?? (folderId || r.data.folders[0]?.id || "");
+      if (nextId !== folderId) {
+        setFolderId(nextId);
+        setPrereq("");
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, [open, data, folderId, currentSlug]);
 
   useEffect(() => {
     if (!open) return;
@@ -76,6 +103,7 @@ export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSum
   const active = assignees.filter((a) => a.isActive);
 
   const submit = () => {
+    if (!data) return;
     const next: Record<string, string> = {};
     const parsed = parseDateInput(due, today);
     if (!folder) next.folder = "Crie uma pasta primeiro.";
@@ -127,10 +155,11 @@ export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSum
           }}
         >
           <Field label="Pasta" htmlFor="nt-folder" error={errors.folder}>
-            <select id="nt-folder" className="field" value={folderId} onChange={(e) => {
+            <select id="nt-folder" className="field" value={folderId} disabled={!data} onChange={(e) => {
                 setFolderId(e.target.value);
                 setPrereq("");
               }}>
+              {!data && <option value="">Carregando…</option>}
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -155,6 +184,7 @@ export function NewTaskPanel({ folders, assignees, today }: { folders: FolderSum
                 id="nt-assignee"
                 className="field"
                 value={assigneeId}
+                disabled={!data}
                 onChange={(e) => setAssigneeId(e.target.value)}
                 aria-invalid={errors.assignee ? true : undefined}
               >

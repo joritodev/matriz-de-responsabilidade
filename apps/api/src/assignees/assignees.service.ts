@@ -26,7 +26,7 @@ export class AssigneesService {
 
   async list() {
     const today = this.clock.today();
-    const snap = await loadSnapshot(this.db);
+    const snap = await loadSnapshot(this.db, { items: 'none' });
     const visible = new Set(snap.matrices.map((m) => m.id));
     return snap.assignees.map((a) => {
       const open = snap.tasks

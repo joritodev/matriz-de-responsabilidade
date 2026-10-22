@@ -47,16 +47,30 @@ export async function createDb(options: { databaseUrl?: string; pgliteDataDir?: 
   const pg = dir === 'memory' ? new PGlite() : new PGlite(dir);
   await pg.waitReady;
 
-  const existing = await pg.query<{ t: string | null }>(`select to_regclass('public.matrices')::text as t`);
-  if (!existing.rows[0]?.t) {
-    const migrationsDir = join(supabaseDir(), 'migrations');
-    for (const file of readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort()) {
+  const migrationsDir = join(supabaseDir(), 'migrations');
+  const files = readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
+  await pg.exec(
+    `create table if not exists schema_migrations (filename text primary key, applied_at timestamptz not null default now())`,
+  );
+  const applied = new Set((await pg.query<{ filename: string }>('select filename from schema_migrations')).rows.map((r) => r.filename));
+  const fresh = !(await pg.query<{ t: string | null }>(`select to_regclass('public.matrices')::text as t`)).rows[0]?.t;
+  let ran = 0;
+  for (const file of files) {
+    if (applied.has(file)) continue;
+    const isBaseline = file === files[0] && !fresh;
+    if (!isBaseline) {
       await pg.exec(readFileSync(join(migrationsDir, file), 'utf8'));
+      ran += 1;
     }
-    if (options.seed ?? true) {
-      await pg.exec(readFileSync(join(supabaseDir(), 'seed.sql'), 'utf8'));
-    }
+    await pg.query(`insert into schema_migrations (filename) values ($1) on conflict do nothing`, [file]);
+  }
+  if (fresh && (options.seed ?? true)) {
+    await pg.exec(readFileSync(join(supabaseDir(), 'seed.sql'), 'utf8'));
+  }
+  if (fresh) {
     logger.log(`PGlite criado em ${dir} com a migração${options.seed ?? true ? ' e o seed' : ''}.`);
+  } else if (ran) {
+    logger.log(`PGlite em ${dir}: ${ran} migração(ões) pendente(s) aplicada(s).`);
   }
 
   const devMember = (process.env.DEV_MEMBER_EMAIL ?? 'supervisor@prazo.local').toLowerCase();
