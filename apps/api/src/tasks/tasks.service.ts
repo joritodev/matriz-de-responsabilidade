@@ -277,7 +277,7 @@ export class TasksService {
     type Event =
       | { type: 'created'; at: string; dueDate: string }
       | { type: 'due_change'; at: string; kind: 'extension' | 'correction'; previousDueDate: string; newDueDate: string; reason: string | null; approvedBy: string | null }
-      | { type: 'reminder'; at: string; kind: 'early' | 'due'; channel: 'whatsapp' | 'email'; status: 'queued' | 'sent' | 'failed'; dueDateSnapshot: string; error: string | null }
+      | { type: 'reminder'; at: string; kind: 'early' | 'due'; channel: 'whatsapp' | 'email'; status: 'queued' | 'taken' | 'sent' | 'failed'; dueDateSnapshot: string; error: string | null }
       | { type: 'completed'; at: string };
     const events: Event[] = [
       { type: 'created', at: t.createdAt.toISOString(), dueDate: changes[0]?.previousDueDate ?? t.dueDate },

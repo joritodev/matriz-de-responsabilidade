@@ -28,7 +28,8 @@ function describe(e: HistoryEvent): [string, string] {
         ? [day, `prorrogada de ${ddmm(e.previousDueDate)} para ${ddmm(e.newDueDate)}${e.reason ? `: ${e.reason}` : ""}${e.approvedBy ? ` (aprovado por ${e.approvedBy})` : ""}`]
         : [day, `prazo corrigido de ${ddmm(e.previousDueDate)} para ${ddmm(e.newDueDate)}`];
     case "reminder": {
-      const status = e.status === "failed" ? ", falhou" : e.status === "queued" ? ", sem confirmação" : "";
+      const status =
+        e.status === "failed" ? ", falhou" : e.status === "queued" ? ", sem confirmação" : e.status === "taken" ? ", recebida pelo Make" : "";
       return [`${day}, ${timeOf(e.at)}`, `cobrança ${e.kind === "early" ? "antecipada" : "no dia"} por ${channelLabel(e.channel)}${status}`];
     }
     case "completed":

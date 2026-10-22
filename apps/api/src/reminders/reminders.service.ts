@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lt, lte } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { conflict, notFound } from '../common/errors';
 import { itemsDueOnOrBefore, loadCalendar, loadSnapshot, reminderInputs, type Snapshot } from '../common/snapshot';
@@ -33,7 +33,7 @@ export interface DispatchResult {
 }
 
 export type BatchKind = 'early' | 'due' | 'mixed';
-export type BatchDisplayStatus = 'sent' | 'failed' | 'queued' | 'no_confirmation';
+export type BatchDisplayStatus = 'sent' | 'failed' | 'queued' | 'taken' | 'no_confirmation';
 
 @Injectable()
 export class RemindersService {
@@ -54,6 +54,11 @@ export class RemindersService {
     }
 
     return this.db.transaction(async (tx) => {
+      const expired = await tx
+        .update(reminderBatches)
+        .set({ status: 'failed', errorMessage: 'Sem confirmação do Make.' })
+        .where(and(eq(reminderBatches.status, 'queued'), lt(reminderBatches.sentOn, today)))
+        .returning({ id: reminderBatches.id });
       const snap = await loadSnapshot(tx);
       const { tasks: input, activeReservations } = reminderInputs(snap);
       const plan = planReminders({ today, tasks: input, activeReservations, calendar: snap.calendar });
@@ -98,27 +103,28 @@ export class RemindersService {
 
       const reasons = plan.skipped.reduce<Record<string, number>>((acc, s) => ({ ...acc, [s.reason]: (acc[s.reason] ?? 0) + 1 }), {});
       this.logger.log(
-        `dispatch ${today}: ${out.length} lote(s) reservado(s), ${plan.skipped.length} pulado(s) ${JSON.stringify(reasons)}, ${alreadyReserved} já reservado(s) por outra execução.`,
+        `dispatch ${today}: ${expired.length} lote(s) expirado(s) sem confirmação, ${out.length} lote(s) reservado(s), ${plan.skipped.length} pulado(s) ${JSON.stringify(reasons)}, ${alreadyReserved} já reservado(s) por outra execução.`,
       );
       return { date: today, batches: out, skipped: plan.skipped };
     });
   }
 
-  /** Make informa o resultado do envio. Mesmo status de novo = 200; trocar status finalizado = 409. */
+  /** Make informa o resultado. `taken` = "recebi" (reserva continua ativa); `sent`/`failed` finalizam. */
   async recordResult(
     id: string,
-    input: { status: 'sent' | 'failed'; providerMessageId?: string; error?: string; makeExecutionId?: string },
+    input: { status: 'taken' | 'sent' | 'failed'; providerMessageId?: string; error?: string; makeExecutionId?: string },
   ) {
     const apply = async () => {
       const [batch] = await this.db.select().from(reminderBatches).where(eq(reminderBatches.id, id)).limit(1);
       if (!batch) throw notFound('Cobrança não encontrada.', 'batch_not_found');
-      if (batch.status !== 'queued') {
+      if (batch.status === 'sent' || batch.status === 'failed') {
         if (batch.status === input.status) return { batch, changed: false };
         throw conflict(
           `Esta cobrança já foi finalizada como ${batch.status === 'sent' ? 'enviada' : 'falhou'}.`,
           'batch_already_finalized',
         );
       }
+      if (batch.status === 'taken' && input.status === 'taken') return { batch, changed: false };
       const [updated] = await this.db
         .update(reminderBatches)
         .set({
@@ -127,7 +133,7 @@ export class RemindersService {
           errorMessage: input.status === 'failed' ? (input.error ?? null) : batch.errorMessage,
           makeExecutionId: input.makeExecutionId ?? batch.makeExecutionId,
         })
-        .where(and(eq(reminderBatches.id, id), eq(reminderBatches.status, 'queued')))
+        .where(and(eq(reminderBatches.id, id), inArray(reminderBatches.status, ['queued', 'taken'])))
         .returning();
       return updated ? { batch: updated, changed: true } : null;
     };
@@ -139,6 +145,33 @@ export class RemindersService {
       status: result.batch.status,
       finishedAt: result.batch.finishedAt?.toISOString() ?? null,
     };
+  }
+
+  /**
+   * Reenviar: lote `taken` de dia anterior vira `failed` "Reenviado manualmente.",
+   * o gatilho libera as reservas e a cobrança sai de novo no próximo dia útil.
+   */
+  async requeue(id: string) {
+    const apply = async () => {
+      const [batch] = await this.db.select().from(reminderBatches).where(eq(reminderBatches.id, id)).limit(1);
+      if (!batch) throw notFound('Cobrança não encontrada.', 'batch_not_found');
+      if (batch.status !== 'taken') {
+        throw conflict('Só é possível reenviar uma cobrança que o Make recebeu e ainda não finalizou.', 'batch_not_requeueable');
+      }
+      if (batch.sentOn >= this.clock.today()) {
+        throw conflict('Esta cobrança é de hoje. Aguarde o Make confirmar o envio.', 'batch_not_stale');
+      }
+      const [updated] = await this.db
+        .update(reminderBatches)
+        .set({ status: 'failed', errorMessage: 'Reenviado manualmente.' })
+        .where(and(eq(reminderBatches.id, id), eq(reminderBatches.status, 'taken')))
+        .returning();
+      return updated ? { batch: updated, changed: true } : null;
+    };
+    const result = (await apply()) ?? (await apply());
+    if (!result) throw conflict('Esta cobrança mudou ao mesmo tempo. Tente de novo.', 'batch_race');
+    this.logger.log(`requeue ${id}: reserva liberada para nova cobrança.`);
+    return { id: result.batch.id, status: result.batch.status };
   }
 
   /** O que sairia em `date` (padrão: próximo dia útil), sem reservar nada. */
@@ -211,7 +244,7 @@ export class RemindersService {
   }
 
   async listBatches(
-    filter: { from?: IsoDate; to?: IsoDate; assigneeId?: string; status?: 'queued' | 'sent' | 'failed' },
+    filter: { from?: IsoDate; to?: IsoDate; assigneeId?: string; status?: 'queued' | 'taken' | 'sent' | 'failed' },
     snapshot?: Snapshot,
   ) {
     const today = this.clock.today();

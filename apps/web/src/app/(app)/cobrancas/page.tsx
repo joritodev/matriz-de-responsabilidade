@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { Avatar } from "@/components/Avatar";
 import { MessagePreview } from "@/components/MessagePreview";
+import { ReenviarLote } from "@/components/ReenviarLote";
 import { BatchChip, Chip } from "@/components/StatusChip";
 import { api } from "@/lib/api";
 import type { Batch, BatchHistory, BatchItem, BatchKind, Channel, IsoDate, PersonRef, Preview } from "@/lib/api-types";
@@ -176,6 +177,15 @@ async function SentTab({ id, today }: { id: string | null; today: IsoDate }) {
           )}
           {shown.displayStatus === "no_confirmation" && (
             <p className="rounded-[14px] bg-surface-muted px-[14px] py-3 text-[13px] text-ink-2">O Make ainda não confirmou este envio. Confira a execução no cenário.</p>
+          )}
+          {shown.status === "taken" && shown.sentOn < today && (
+            <div className="rounded-[14px] bg-soon-bg px-[14px] py-3 text-[13px] text-soon-fg">
+              <p>O Make recebeu esta cobrança, mas nunca confirmou o envio. A reserva continua ativa e nada sai de novo enquanto isso.</p>
+              <ReenviarLote id={shown.id} firstName={shown.assignee.fullName.split(" ")[0]} />
+            </div>
+          )}
+          {shown.status === "taken" && shown.sentOn === today && (
+            <p className="rounded-[14px] bg-soon-bg px-[14px] py-3 text-[13px] text-soon-fg">O Make recebeu esta cobrança; aguardando a confirmação do envio.</p>
           )}
           <MessagePreview channel={shown.channel} subject={shown.subject} body={shown.messageBody} to={recipientText(shown.channel, shown.recipient)} />
           {shown.messageReconstructed && <p className="text-[12px] text-ink-3">Texto remontado a partir das demandas do lote.</p>}

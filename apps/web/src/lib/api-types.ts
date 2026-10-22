@@ -73,7 +73,7 @@ export interface RulerGroup {
 }
 
 export type BatchKind = "early" | "due" | "mixed";
-export type BatchStatus = "queued" | "sent" | "failed";
+export type BatchStatus = "queued" | "taken" | "sent" | "failed";
 export type BatchDisplayStatus = BatchStatus | "no_confirmation";
 
 export interface BatchItem {

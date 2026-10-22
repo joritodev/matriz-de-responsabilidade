@@ -43,11 +43,11 @@ export interface ReminderItemState {
   kind: ReminderKind;
   channel: Channel;
   dueDateSnapshot: IsoDate;
-  batchStatus: 'queued' | 'sent' | 'failed';
+  batchStatus: 'queued' | 'taken' | 'sent' | 'failed';
   createdAt: Date | string;
 }
 
-const severity: Record<'sent' | 'queued' | 'failed', number> = { sent: 0, queued: 1, failed: 2 };
+const severity: Record<'sent' | 'queued' | 'taken' | 'failed', number> = { sent: 0, queued: 1, taken: 1, failed: 2 };
 
 /**
  * Estado de uma cobrança (antecipada ou no dia) para o prazo atual da demanda.
@@ -69,7 +69,10 @@ export function reminderState(
       if (!cur || new Date(it.createdAt).getTime() >= new Date(cur.createdAt).getTime()) latest.set(it.channel, it);
     }
     let worst: 'sent' | 'queued' | 'failed' = 'sent';
-    for (const it of latest.values()) if (severity[it.batchStatus] > severity[worst]) worst = it.batchStatus;
+    for (const it of latest.values()) {
+      const s: 'sent' | 'queued' | 'failed' = it.batchStatus === 'taken' ? 'queued' : it.batchStatus;
+      if (severity[s] > severity[worst]) worst = s;
+    }
     return worst;
   }
   if (task.status !== 'pending') return 'none';
