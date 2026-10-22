@@ -140,7 +140,8 @@ export class TasksService {
     const today = this.clock.today();
     if (input.dueDate < today) throw badRequest('O prazo precisa ser hoje ou depois.', 'due_date_in_past');
     return this.db.transaction(async (tx) => {
-      const [m] = await tx.select().from(matrices).where(eq(matrices.id, matrixId)).limit(1);
+      // Trava a linha da pasta: duas criações em paralelo não leem o mesmo max(position).
+      const [m] = await tx.select().from(matrices).where(eq(matrices.id, matrixId)).for('update').limit(1);
       if (!m) throw notFound('Pasta não encontrada.', 'matrix_not_found');
       if (m.isArchived) throw badRequest('Esta pasta está arquivada.', 'matrix_archived');
       await this.assertAssignee(tx, input.assigneeId);

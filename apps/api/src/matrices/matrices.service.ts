@@ -24,6 +24,8 @@ export class MatricesService {
   async create(input: { name: string; color: FolderColor; description?: string | null }) {
     try {
       return await this.db.transaction(async (tx) => {
+        // Lock de transação serializa o contador global de posição entre conexões.
+        await tx.execute(sql`select pg_advisory_xact_lock(9001)`);
         const existing = await tx.select({ slug: matrices.slug }).from(matrices);
         const taken = new Set(existing.map((r) => r.slug));
         const base = slugify(input.name);
