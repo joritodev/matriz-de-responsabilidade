@@ -176,7 +176,7 @@ export class TasksService {
       if (input.assigneeId) await this.assertAssignee(tx, input.assigneeId);
       if (input.prerequisiteTaskId) {
         if (input.prerequisiteTaskId === id) throw badRequest('Uma demanda não pode depender dela mesma.', 'prerequisite_self');
-        await this.assertPrerequisite(tx, t.matrixId, input.prerequisiteTaskId);
+        await this.assertPrerequisite(tx, t.matrixId, input.prerequisiteTaskId, id);
       }
       const patch: Partial<Task> = {};
       if (input.title !== undefined) patch.title = input.title;
@@ -358,8 +358,23 @@ export class TasksService {
     if (!a.isActive) throw badRequest(`${a.fullName} está desativada. Reative a pessoa ou escolha outra.`, 'assignee_inactive');
   }
 
-  private async assertPrerequisite(tx: Tx, matrixId: string, taskId: string) {
+  /**
+   * O pré-requisito precisa ser da mesma pasta. Sobe a cadeia dele: se encontrar
+   * a demanda que está sendo editada, é ciclo; a cadeia também é limitada a 50 níveis.
+   */
+  private async assertPrerequisite(tx: Tx, matrixId: string, taskId: string, updatingId?: string) {
     const [p] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
     if (!p || p.matrixId !== matrixId) throw badRequest('O pré-requisito precisa ser uma demanda desta pasta.', 'prerequisite_other_matrix');
+    let current = p;
+    for (let level = 0; level < 50; level++) {
+      if (!current.prerequisiteTaskId) return;
+      const [next] = await tx.select().from(tasks).where(eq(tasks.id, current.prerequisiteTaskId)).limit(1);
+      if (!next) return;
+      if (updatingId && next.id === updatingId) {
+        throw badRequest(`Isso criaria um ciclo: ${next.title} já depende desta demanda.`, 'prerequisite_cycle');
+      }
+      current = next;
+    }
+    throw badRequest('A cadeia de pré-requisitos é longa demais (máximo de 50).', 'prerequisite_chain_too_long');
   }
 }
